@@ -283,3 +283,16 @@ app.post("/decks/:deckId/words", async (req, res) => {
     res.status(400).send(error);
   }
 });
+
+app.get("/decks/:deckId/words", async (req, res) => {
+  try {
+    const deckId = req.params.deckId;
+    const deck = await Deck.findById(deckId).populate("words");
+    if (!deck) {
+      return res.status(404).send("Колода не найдена.");
+    }
+    res.status(200).json({ deckName: deck.name, words: deck.words });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});

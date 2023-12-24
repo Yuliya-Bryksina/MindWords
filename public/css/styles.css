@@ -213,7 +213,6 @@ input[readonly] {
 }
 
 .header-with-button {
-  display: flex; /* Используем flexbox для выравнивания элементов в строку */
   justify-content: space-between; /* Располагаем элементы на противоположных концах контейнера */
   align-items: center; /* Центрируем элементы по вертикали */
 }
@@ -338,4 +337,60 @@ input[readonly] {
 /* Стили для последней колоды в группе для удаления margin-bottom */
 .deck:last-child {
   margin-bottom: 0;
+}
+
+.term-container {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+  padding-bottom: 10px; /* Отступ текста от линии */
+}
+
+.term-column,
+.translation-column {
+  flex: 1;
+  display: flex;
+  justify-content: left; /* Центрирование содержимого столбца */
+}
+
+.term,
+.transcription,
+.translation {
+  margin: 0 10px; /* Добавляет пространство между английским словом, транскрипцией и переводом */
+}
+
+.term {
+  font-weight: bold;
+}
+
+.transcription {
+  font-style: normal;
+}
+
+.translation {
+  text-align: right;
+}
+
+#deckNameTitle {
+  position: relative;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+#deckNameTitle:after {
+  content: "";
+  display: block;
+  height: 1px;
+  background-color: #dfdcdc;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.term-container:not(:last-child) {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
 }

@@ -1,6 +1,11 @@
 let currentWordIndex = 0; // Индекс текущего слова
 let wordList = []; // Список слов
 
+// Вы можете вызвать эту функцию при загрузке страницы deck.html
+if (window.location.pathname.includes("/deck.html")) {
+  loadDeckWords();
+}
+
 function showNotification(message) {
   const notification = document.getElementById("notification");
   notification.textContent = message;
@@ -576,10 +581,12 @@ function loadDecks() {
           deckDiv.appendChild(termsCountSpan);
           deckDiv.appendChild(titleSpan);
 
+          // Обработчик клика по колоде
+          container.appendChild(deckDiv);
           deckDiv.addEventListener("click", () => {
-            // Обработчик клика, который может например перенаправить пользователя на страницу колоды
-            window.location.href = `/deck/${deck._id}`;
+            window.location.href = `deck.html?deckId=${deck._id}`; // Исправленный URL
           });
+
           groupDiv.appendChild(deckDiv);
         });
         container.appendChild(groupDiv);
@@ -642,4 +649,78 @@ document.addEventListener("DOMContentLoaded", loadDecks);
 function saveSelectedDeck() {
   const selectedDeckId = document.getElementById("deckSelect").value;
   localStorage.setItem("selectedDeckId", selectedDeckId);
+}
+
+function openDeckPage(deckId) {
+  window.location.href = `deck.html?deckId=${deckId}`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const deckId = urlParams.get("deckId");
+  if (deckId) {
+    fetch(`/decks/${deckId}/words`)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("deckNameTitle").textContent = data.deckName;
+        const wordsList = document.getElementById("deckWordsList");
+        wordsList.innerHTML = "";
+        data.words.forEach((word) => {
+          const wordElement = document.createElement("div");
+          wordElement.textContent = word.englishWord; // Изменить в соответствии с моделью
+          wordsList.appendChild(wordElement);
+        });
+      })
+      .catch((error) =>
+        console.error("Ошибка при получении слов из колоды: ", error)
+      );
+  }
+});
+
+// Эту функцию нужно добавить в script.js
+function loadDeckWords() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const deckId = urlParams.get("deckId");
+  if (deckId) {
+    fetch(`/decks/${deckId}/words`)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("deckNameTitle").textContent = data.deckName;
+        const wordsList = document.getElementById("deckWordsList");
+        wordsList.innerHTML = "";
+
+        data.words.forEach((word) => {
+          const termContainer = document.createElement("div");
+          termContainer.className = "term-container";
+
+          const termColumn = document.createElement("div");
+          termColumn.className = "term-column";
+          termContainer.appendChild(termColumn);
+
+          const termDiv = document.createElement("div");
+          termDiv.className = "term";
+          termDiv.textContent = word.term;
+          termColumn.appendChild(termDiv);
+
+          const transcriptionDiv = document.createElement("div");
+          transcriptionDiv.className = "transcription";
+          transcriptionDiv.textContent = word.transcription;
+          termColumn.appendChild(transcriptionDiv);
+
+          const translationColumn = document.createElement("div");
+          translationColumn.className = "translation-column";
+          termContainer.appendChild(translationColumn);
+
+          const translationDiv = document.createElement("div");
+          translationDiv.className = "translation";
+          translationDiv.textContent = word.translation;
+          translationColumn.appendChild(translationDiv);
+
+          wordsList.appendChild(termContainer);
+        });
+      })
+      .catch((error) => {
+        console.error("Ошибка при получении слов из колоды: ", error);
+      });
+  }
 }

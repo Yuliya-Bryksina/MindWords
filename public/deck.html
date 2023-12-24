@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <title>Колода слов</title>
+  </head>
+  <body>
+    <section class="rounded-section">
+      <!-- Используйте тот же класс, что и в main.html -->
+      <div class="header-with-button">
+        <!-- По структуре похоже на заголовок с кнопкой в main.html -->
+        <h1 id="deckNameTitle">Название колоды</h1>
+      </div>
+      <div id="deckWordsList" class="words-container">
+        <!-- Стиль для списка слов -->
+        <div class="term-container">
+          <div class="term-column">
+            <div class="term">{term}</div>
+            <div class="transcription">{transcription}</div>
+          </div>
+          <div class="translation-column">
+            <div class="translation">{translation}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src="/js/script.js"></script>
+  </body>
+</html>
