@@ -1,0 +1,341 @@
+body {
+  font-family: "Inter", sans-serif;
+}
+
+/* Уменьшение размера шрифта для элементов в блоке dailyTasks */
+#dailyTasks .task {
+  font-size: 14px; /* Укажите желаемый размер шрифта */
+}
+
+/* Уменьшение размера шрифта для элементов span внутри блока dailyTasks */
+#dailyTasks .task span {
+  font-size: 12px; /* Укажите желаемый размер шрифта */
+}
+
+/* Стили для поля ввода при фокусировке */
+input:focus {
+  outline: none; /* Убирает стандартную рамку фокуса */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Добавляет тень */
+}
+/* Стили для placeholder (подсказка) при фокусировке */
+input:focus::placeholder {
+  color: transparent; /* Делаем текст подсказки прозрачным */
+}
+
+.notification {
+  display: none; /* Скрыть по умолчанию */
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  background-color: #4a7090; /* Зеленый фон */
+  color: white;
+  text-align: center;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+section {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  background-color: #fcf8f8;
+}
+
+input[type="text"],
+.translations {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus {
+  border-color: #7393a7;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #7393a7;
+  transition: background-color 0.3s;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+  background-color: #4a7090;
+}
+
+.translations div {
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.translations div:hover {
+  background-color: #f9f9f9;
+}
+
+/* Дополнительные стили для readonly полей */
+input[readonly] {
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+#dailyTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task {
+  background-color: #f2f2f2; /* Пример цвета фона */
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer; /* Если будут кликабельны */
+}
+
+/* Стили для модального окна */
+.modal {
+  display: none; /* По умолчанию модальное окно скрыто */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.5
+  ); /* Затемнение фона с небольшой прозрачностью */
+  z-index: 1;
+  cursor: pointer; /* Указатель, показывающий, что можно кликнуть, чтобы закрыть */
+}
+
+.modal-content {
+  background-color: #fcf8f8; /* Фон модального окна */
+  width: 50%; /* Ширина модального окна (можете настроить по своему усмотрению) */
+  max-width: 400px;
+  height: 50%; /* Максимальная ширина модального окна */
+  margin: 10% auto; /* Расположение по центру экрана по вертикали и горизонтали */
+  padding: 30px;
+  border-radius: 15px; /* Закругление углов */
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Тень для модального окна */
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Структура колонки для внутренних элементов */
+  cursor: default;
+  justify-content: space-between; /* Устанавливает обычный курсор, чтобы переопределить стиль .modal */
+}
+.deck-creation-modal .modal-content {
+  width: 300px; /* установите нужную ширину */
+  height: auto; /* автоматическая высота */
+  /* ... другие индивидуальные стили ... */
+}
+
+.close {
+  position: absolute;
+  right: 10px; /* Отступ справа для кнопки закрытия */
+  top: 10px; /* Отступ сверху для кнопки закрытия */
+  cursor: pointer; /* Указатель при наведении */
+}
+
+/* Добавьте стили для текстового контента */
+#wordInEnglish,
+#wordTranscription {
+  text-align: center; /* Выравнивание по центру */
+}
+
+/* Добавьте стили для кнопок внизу модального окна */
+.modal-footer {
+  margin-top: 20px; /* Это добавит пространство между содержимым и .modal-footer */
+  display: flex;
+  justify-content: space-between; /* Для равномерного распределения кнопок внутри */
+}
+
+.modal-footer button {
+  border-radius: 20px;
+  margin-right: 25px;
+}
+.modal-footer button:last-child {
+  margin-right: 0; /* Убираем отступ справа для последней кнопки */
+}
+
+.translations {
+  border-radius: 5px; /* Скругление углов для блока с вариантами перевода */
+  display: none;
+}
+
+.rounded-section {
+  border-radius: 15px;
+  position: relative; /* Или любое другое значение, которое вам нравится */
+  /* Другие стили, такие как padding, background-color и т.д., если нужно */
+}
+
+/* Стили для блока с переводом слова */
+#studyWord {
+  text-align: center;
+
+  font-size: 1.25em; /* Увеличьте размер шрифта, если нужно */
+  border-bottom: 1px solid #ccc; /* Тонкая линия для разделения */
+  padding-bottom: 20px;
+  margin-bottom: 0; /* Отступ снизу, чтобы линия не прилипала к тексту */
+}
+
+/* Стили для английского слова и транскрипции, которые будут показаны после нажатия на кнопку */
+#wordDefinition {
+  text-align: center;
+  display: none; /* Скрыть элементы до нажатия на кнопку */
+}
+
+#showDefinition {
+  margin-top: 70px;
+  border-radius: 20px;
+}
+/* Скрытый по умолчанию контент */
+.hidden-content {
+  display: none;
+}
+
+/* Контент видимый только когда активен */
+.visible-content {
+  display: block;
+  margin-top: 20px; /* Отступ сверху */
+}
+
+.header-with-button {
+  display: flex; /* Используем flexbox для выравнивания элементов в строку */
+  justify-content: space-between; /* Располагаем элементы на противоположных концах контейнера */
+  align-items: center; /* Центрируем элементы по вертикали */
+}
+/* Стили для кнопки создания колоды */
+.create-deck-button {
+  padding: 10px 15px; /* Добавляет отступы вокруг текста */
+  font-size: 14px; /* Устанавливает размер шрифта текста кнопки */
+  border-radius: 20px; /* Применяет закругление углов кнопки */
+  background-color: #7393a7; /* Цвет фона кнопки */
+  color: white; /* Цвет текста кнопки */
+  border: none; /* Убирает границу кнопки */
+  cursor: pointer; /* Изменяет указатель при наведении */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Добавляет тень для кнопки */
+  /* Убедитесь, что кнопка выровнена по правому краю контейнера */
+  width: auto; /* Или конкретное значение, например 120px */
+}
+
+.rounded-section h2 {
+  display: inline-block; /* Заголовок будет в линии с другими элементами */
+  margin-right: 20px;
+  color: #444; /* Отступ справа от заголовка до кнопки */
+}
+.add-word-section {
+  position: relative; /* Добавьте относительное позиционирование к родительскому блоку */
+}
+
+/* Стили для выпадающего списка колод */
+.deck-select {
+  width: 100%; /* Регулируйте ширину по необходимости */
+  padding: 10px;
+  margin-top: 10px; /* Отступ сверху */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  -webkit-appearance: none; /* Убираем стандартное оформление в Chrome и Safari */
+  -moz-appearance: none; /* Убираем стандартное оформление в Firefox */
+  appearance: none; /* Убираем стандартное оформление для стандартных браузеров */
+}
+
+/* Вы можете добавить дополнительные стили для стрелочки выпадающего списка, если нужно */
+#deckSelect {
+  margin-bottom: 20px;
+}
+
+.select-style {
+  display: block;
+  font-size: 16px;
+  font-family: "Inter", sans-serif;
+  padding: 8px;
+  width: 50%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); /* Иконка стрелки */
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 12px 12px;
+  -webkit-appearance: none; /* Убирает стандартное оформление в Chrome и Safari */
+  -moz-appearance: none; /* Убирает стандартное оформление в Firefox */
+  appearance: none; /* Убирает стандартное оформление */
+}
+.select-style:hover {
+  border-color: #3e5c7f; /* Цвет рамки при наведении */
+}
+
+.select-style:focus {
+  outline: none;
+  border-color: #3e5c7f; /* Цвет рамки при фокусе */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Тень при фокусе */
+}
+
+.deck-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Простая тень для блоков */
+}
+
+/* Стили для заголовка группы колод */
+.deck-group h3 {
+  margin-bottom: 10px;
+}
+
+/* Стили для отдельной колоды */
+.deck {
+  background-color: #ffffff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  position: relative; /* Для позиционирования псевдоэлемента */
+  overflow: hidden; /* Обрезать полосу внутри блока */
+  transition: all 0.3s ease; /* Плавный переход для полосы и шрифта */
+}
+.deck:hover::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #007bff; /* Цвет полосы */
+  transition: all 0.3s ease; /* Плавное добавление полосы */
+}
+.deck:hover {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Подсветка при наведении */
+}
+.deck .deck-title {
+  font-weight: 600; /* Более жирный шрифт для названия колоды */
+  display: block;
+  margin-bottom: 5px; /* Отступ между количеством терминов и названием */
+}
+
+.deck .deck-terms-count {
+  font-size: 0.8em; /* Меньший размер шрифта для количества терминов */
+  color: #555; /* Цвет текста для количества терминов */
+}
+
+/* Стили для последней колоды в группе для удаления margin-bottom */
+.deck:last-child {
+  margin-bottom: 0;
+}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Интервальное Повторение</title>
+    <style>
+      /* Ваши стили здесь */
+    </style>
+    <link rel="stylesheet" href="css/styles.css"
+  </head>
+  <body>
+    <div id="app">
+      <!-- Форма для добавления новых слов -->
+      <div class="add-word-section">
+        <section class="rounded-section">
+          <div class="header-with-button">
+            <h2>Добавить слово в колоду</h2>
+            <button id="createDeckButton" class="create-deck-button">
+              Создать колоду
+            </button>
+          </div>
+
+          <select id="deckSelect" class="select-style">
+            <option value="">Выберите колоду</option>
+            <!-- Опции будут добавлены динамически -->
+          </select>
+          <!-- Кнопка создания колоды -->
+
+          <input
+            type="text"
+            id="wordInput"
+            placeholder="Слово на английском"
+            oninput="getTranslations(this.value)"
+          />
+          <input
+            type="text"
+            id="transcription"
+            placeholder="Транскрипция (не обязательно)"
+            readonly
+          />
+          <input type="text" id="translation" placeholder="Перевод" />
+          <div id="translations" class="translations"></div>
+          <button id="addWordButton" onclick="addWord()">Добавить</button>
+        </section>
+      </div>
+
+      <!-- Список слов в колоде -->
+      <section id="dailyTasks" class="rounded-section">
+        <div class="task new-words" onclick="openNewWordsModal()">
+          Учить новые слова: <span id="newWordsCount">0 из 10</span>
+        </div>
+        <div class="task words-to-review" onclick="openWordsToReviewModal()">
+          Слова для повторения: <span id="wordsToReviewCount">0</span>
+        </div>
+      </section>
+
+      <!-- Модуль обучения -->
+<section class="rounded-section">
+  <h2>Список колод</h2>
+  <input type="text" id="searchInput" oninput="searchDecks()" placeholder="Поиск колод">
+  <div id="learningModule">
+    <!-- Место для отображения колод будет здесь -->
+    <div id="decksContainer"></div>
+  </div>
+</section>
+
+
+    <div id="studyModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="studyWord">Слово для изучения</p>
+        <div id="wordDefinition" style="display: none">
+          <span id="wordInEnglish"></span><br />
+          <span id="wordTranscription"></span>
+        </div>
+        <button id="showDefinition" onclick="showDefinition()">
+          Показать определение
+        </button>
+        <div class="modal-footer">
+          <button id="knowWordButton">Я уже знаю это слово</button>
+          <button id="learnWordButton">Начать учить это слово</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="newDeckModal"
+      class="modal deck-creation-modal"
+      style="display: none"
+    >
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="newDeckForm">
+          <input type="text" id="newDeckName" placeholder="Название колоды" />
+          <button type="submit">Создать колоду</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+    <script src="/js/script.js"></script>
+  </body>
+</html>
