@@ -1,7 +1,6 @@
 let currentWordIndex = 0; // Индекс текущего слова
 let wordList = []; // Список слов
 
-// Вы можете вызвать эту функцию при загрузке страницы deck.html
 if (window.location.pathname.includes("/deck.html")) {
   loadDeckWords();
 }
@@ -21,11 +20,16 @@ function updateDailyTasks() {
   fetch("/daily-tasks")
     .then((response) => response.json())
     .then((data) => {
-      document.getElementById(
-        "newWordsCount"
-      ).textContent = `${data.newWords} из 10`;
-      document.getElementById("wordsToReviewCount").textContent =
-        data.wordsToReview;
+      const newWordsCountElement = document.getElementById("newWordsCount");
+      if (newWordsCountElement) {
+        newWordsCountElement.textContent = `${data.newWords} из 10`;
+      }
+
+      const wordsToReviewCountElement =
+        document.getElementById("wordsToReviewCount");
+      if (wordsToReviewCountElement) {
+        wordsToReviewCountElement.textContent = data.wordsToReview;
+      }
     })
     .catch((error) =>
       console.error("Ошибка при получении ежедневных задач: ", error)
@@ -36,9 +40,10 @@ function updateNewWordsCount() {
   fetch("/new-words-count")
     .then((response) => response.json())
     .then((data) => {
-      document.getElementById(
-        "newWordsCount"
-      ).textContent = `0 из ${data.newWordsCount}`;
+      const newWordsCountElement = document.getElementById("newWordsCount");
+      if (newWordsCountElement) {
+        newWordsCountElement.textContent = `0 из ${data.newWordsCount}`;
+      }
     })
     .catch((error) =>
       console.error("Ошибка при получении количества новых слов: ", error)
@@ -189,20 +194,21 @@ function loadWord(word) {
   document.getElementById("showDefinition").style.display = "block"; // Показываем кнопку при загрузке нового слова
 }
 
-//тоже старые обработчики событий от updateWord функции
-document
-  .getElementById("knowWordButton")
-  .addEventListener("click", function () {
+const knowWordButton = document.getElementById("knowWordButton");
+if (knowWordButton) {
+  knowWordButton.addEventListener("click", function () {
     const wordId = this.dataset.wordId;
-    updateWordStatus(wordId, true); // Заменяем на updateWordStatus
+    updateWordStatus(wordId, true);
   });
+}
 
-document
-  .getElementById("learnWordButton")
-  .addEventListener("click", function () {
+const learnWordButton = document.getElementById("learnWordButton");
+if (learnWordButton) {
+  learnWordButton.addEventListener("click", function () {
     const wordId = this.dataset.wordId;
-    updateWordStatus(wordId, false); // Заменяем на updateWordStatus
+    updateWordStatus(wordId, false); // Обновляем статус слова
   });
+}
 
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
@@ -282,27 +288,25 @@ function openWordsToReviewModal() {
     .catch((error) => console.error("Ошибка: ", error));
 }
 
-// Обработка закрытия модального окна
-document.getElementsByClassName("close")[0].onclick = function () {
-  document.getElementById("studyModal").style.display = "none";
-};
-
 // Вызывайте эти функции при загрузке страницы или в соответствующих событиях
 updateDailyTasks();
 updateNewWordsCount();
 
 // Закрытие модального окна по клику на крестик
-document.querySelector(".close").addEventListener("click", function () {
-  document.getElementById("studyModal").style.display = "none";
-});
+const closeButton = document.querySelector(".close");
+if (closeButton) {
+  closeButton.addEventListener("click", function () {
+    document.getElementById("studyModal").style.display = "none";
+  });
+}
 
-document
-  .querySelector("#newDeckModal .close")
-  .addEventListener("click", function () {
+const closeBtn = document.querySelector("#newDeckModal .close");
+if (closeBtn) {
+  closeBtn.addEventListener("click", function () {
     document.getElementById("newDeckModal").style.display = "none";
-    // Очистить поле ввода названия колоды
     document.getElementById("newDeckName").value = "";
   });
+}
 
 // Закрытие модального окна по клику вне окна
 window.addEventListener("click", function (event) {
@@ -327,46 +331,79 @@ function toggleInputFields(enabled) {
 }
 
 document.addEventListener("DOMContentLoaded", (event) => {
-  document.getElementById("wordInput").disabled = true;
-  document.getElementById("transcription").disabled = true;
-  document.getElementById("translation").disabled = true;
-  // Если у вас есть кнопка добавления слова, ее тоже можно отключить:
-  document.getElementById("addWordButton").disabled = true;
+  const wordInput = document.getElementById("wordInput");
+  if (wordInput) {
+    wordInput.disabled = true;
+  }
+
+  const transcription = document.getElementById("transcription");
+  if (transcription) {
+    transcription.disabled = true;
+  }
+
+  const translation = document.getElementById("translation");
+  if (translation) {
+    translation.disabled = true;
+  }
+
+  const addWordButton = document.getElementById("addWordButton");
+  if (addWordButton) {
+    addWordButton.disabled = true;
+  }
+
   const deckSelectElement = document.getElementById("deckSelect");
-  const selectedDeckId = localStorage.getItem("selectedDeckId");
-  if (
-    selectedDeckId &&
-    Array.from(deckSelectElement.options).some(
-      (option) => option.value === selectedDeckId
-    )
-  ) {
-    deckSelectElement.value = selectedDeckId;
-    toggleInputFields(true); // Активируем поля
-  } else {
-    localStorage.removeItem("selectedDeckId"); // Удаляем невалидное значение из localStorage
-    toggleInputFields(false); // Деактивируем поля
+  if (deckSelectElement) {
+    const selectedDeckId = localStorage.getItem("selectedDeckId");
+    if (
+      selectedDeckId &&
+      Array.from(deckSelectElement.options).some(
+        (option) => option.value === selectedDeckId
+      )
+    ) {
+      deckSelectElement.value = selectedDeckId;
+      toggleInputFields(true); // Активируем поля
+    } else {
+      localStorage.removeItem("selectedDeckId"); // Удаляем невалидное значение из localStorage
+      toggleInputFields(false); // Деактивируем поля
+    }
   }
 });
 
-document.getElementById("deckSelect").addEventListener("change", (event) => {
-  const hasDecks = event.target.value; // Получаем значение выбранного option
-  const isDisabled = !hasDecks; // Если значение не выбрано, поля остаются отключенными
+const deckSelectElement = document.getElementById("deckSelect");
+if (deckSelectElement) {
+  deckSelectElement.addEventListener("change", (event) => {
+    const hasDecks = event.target.value; // Получаем значение выбранного option
+    const isDisabled = !hasDecks;
+    // Включаем или отключаем поля ввода
+    const wordInput = document.getElementById("wordInput");
+    if (wordInput) {
+      wordInput.disabled = isDisabled;
+    }
 
-  // Включаем или отключаем поля ввода
-  document.getElementById("wordInput").disabled = isDisabled;
-  document.getElementById("transcription").disabled = isDisabled;
-  document.getElementById("translation").disabled = isDisabled;
-  // Если у вас есть кнопка добавления слова, ее тоже можно включить или отключить
-  document.getElementById("addWordButton").disabled = isDisabled;
+    const transcription = document.getElementById("transcription");
+    if (transcription) {
+      transcription.disabled = isDisabled;
+    }
 
-  // Сохраняем выбранную колоду в localStorage
-  saveSelectedDeck();
-});
+    const translation = document.getElementById("translation");
+    if (translation) {
+      translation.disabled = isDisabled;
+    }
+
+    // Если у вас есть кнопка добавления слова, ее тоже можно включить или отключить
+    const addWordButton = document.getElementById("addWordButton");
+    if (addWordButton) {
+      addWordButton.disabled = isDisabled;
+    }
+
+    // Сохраняем выбранную колоду в localStorage
+    saveSelectedDeck();
+  });
+}
+
 // Загрузка колод при загрузке страницы
 document.addEventListener("DOMContentLoaded", loadDecks);
 
-// Функция, которая вызывается при клике на кнопку "Показать определение"
-// Функция для отображения определения слова
 // Corrected showDefinition function
 function showDefinition() {
   const studyWord = document.getElementById("studyWord").textContent;
@@ -425,29 +462,35 @@ function handleLastWord() {
 }
 
 // Добавление прослушивателя для кнопки "Показать определение"
-document
-  .getElementById("showDefinition")
-  .addEventListener("click", showDefinition);
-
-// Обработчик для кнопки "Показать определение"
-document
-  .getElementById("showDefinition")
-  .addEventListener("click", function () {
+const showDefinitionButton = document.getElementById("showDefinition");
+if (showDefinitionButton) {
+  showDefinitionButton.addEventListener("click", showDefinition);
+  showDefinitionButton.addEventListener("click", function () {
     var wordDefinition = document.getElementById("wordDefinition");
-    wordDefinition.classList.toggle("hidden");
-    wordDefinition.classList.toggle("visible");
-    this.style.display = "none"; // Скрываем кнопку "Показать определение"
+    if (wordDefinition) {
+      wordDefinition.classList.toggle("hidden");
+      wordDefinition.classList.toggle("visible");
+      this.style.display = "none"; // Скрываем кнопку "Показать определение"
+    }
   });
+}
 
-document
-  .getElementById("createDeckButton")
-  .addEventListener("click", function () {
-    document.getElementById("newDeckModal").style.display = "block";
+const createDeckButton = document.getElementById("createDeckButton");
+if (createDeckButton) {
+  createDeckButton.addEventListener("click", function () {
+    const newDeckModal = document.getElementById("newDeckModal");
+    if (newDeckModal) {
+      newDeckModal.style.display = "block";
+    }
   });
+}
 
-document.querySelector(".modal .close").addEventListener("click", function () {
-  this.parentElement.parentElement.style.display = "none";
-});
+const closeModalButton = document.querySelector(".modal .close");
+if (closeModalButton) {
+  closeModalButton.addEventListener("click", function () {
+    this.parentElement.parentElement.style.display = "none";
+  });
+}
 
 function toggleDefinitionVisibility() {
   const wordDefinition = document.getElementById("wordDefinition");
@@ -463,8 +506,6 @@ function toggleDefinitionVisibility() {
     showDefinitionBtn.style.display = "block"; // Показываем кнопку
   }
 }
-
-//---Функционал создания коллод---//
 
 // Добавление новой колоды
 function createDeck(deckName) {
@@ -487,14 +528,21 @@ function createDeck(deckName) {
     });
 }
 
-document.getElementById("newDeckForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-  const deckName = document.getElementById("newDeckName").value;
-  createDeck(deckName);
+const newDeckForm = document.getElementById("newDeckForm");
+if (newDeckForm) {
+  newDeckForm.addEventListener("submit", function (e) {
+    e.preventDefault();
 
-  // Очистка поля ввода названия колоды после отправки
-  deckNameInput.value = "";
-});
+    const deckNameInput = document.getElementById("newDeckName");
+    if (deckNameInput) {
+      const deckName = deckNameInput.value;
+      createDeck(deckName);
+
+      // Очистка поля ввода названия колоды после отправки
+      deckNameInput.value = "";
+    }
+  });
+}
 
 // Получение списка колод
 function getDecks() {
@@ -502,13 +550,15 @@ function getDecks() {
     .then((response) => response.json())
     .then((data) => {
       const deckSelect = document.getElementById("deckSelect");
-      deckSelect.innerHTML = '<option value="">Выберите колоду</option>';
-      data.forEach((deck) => {
-        const option = document.createElement("option");
-        option.value = deck._id;
-        option.textContent = deck.name;
-        deckSelect.appendChild(option);
-      });
+      if (deckSelect) {
+        deckSelect.innerHTML = '<option value="">Выберите колоду</option>';
+        data.forEach((deck) => {
+          const option = document.createElement("option");
+          option.value = deck._id;
+          option.textContent = deck.name;
+          deckSelect.appendChild(option);
+        });
+      }
     })
     .catch((error) => {
       console.error("Error getting decks:", error);
@@ -538,70 +588,79 @@ getDecks();
 
 // Функция для загрузки и отображения колод
 function loadDecks() {
-  fetch("/decks/grouped") // Используем новый маршрут '/decks/grouped'
+  fetch("/decks/grouped")
     .then((response) => response.json())
     .then((groups) => {
       const container = document.getElementById("decksContainer");
-      container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
-      groups.forEach((group) => {
-        // Создайте HTML для отображения колод, сгруппированных по месяцам
-        const groupDiv = document.createElement("div");
-        groupDiv.className = "deck-group";
-        // groupDiv.innerHTML = `<h3>${group._id}</h3>`;
-        // Получаем текущий месяц и год
-        const currentDate = new Date();
-        const currentYearMonth = `${currentDate.getFullYear()}-${String(
-          currentDate.getMonth() + 1
-        ).padStart(2, "0")}`;
+      if (container) {
+        container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
 
-        // Сравниваем с годом и месяцем группы
-        const groupTitle =
-          group._id === currentYearMonth ? "В этом месяце" : group._id;
+        groups.forEach((group) => {
+          // Создайте HTML для отображения колод, сгруппированных по месяцам
+          const groupDiv = document.createElement("div");
+          groupDiv.className = "deck-group";
 
-        // Заменяем непосредственно содержимое заголовка
-        const titleElement = document.createElement("h3");
-        titleElement.textContent = groupTitle;
-        groupDiv.appendChild(titleElement);
+          // Получаем текущий месяц и год
+          const currentDate = new Date();
+          const currentYearMonth = `${currentDate.getFullYear()}-${String(
+            currentDate.getMonth() + 1
+          ).padStart(2, "0")}`;
 
-        // Создаем блоки для каждой колоды
-        group.decks.forEach((deck) => {
-          const deckDiv = document.createElement("div");
-          deckDiv.className = "deck";
-          // Элемент для количества терминов
-          const termsCountSpan = document.createElement("span");
-          termsCountSpan.className = "deck-terms-count";
-          termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
+          // Сравниваем с годом и месяцем группы
+          const groupTitle =
+            group._id === currentYearMonth ? "В этом месяце" : group._id;
 
-          // Элемент для названия колоды
-          const titleSpan = document.createElement("span");
-          titleSpan.className = "deck-title";
-          titleSpan.textContent = deck.name;
+          // Заменяем непосредственно содержимое заголовка
+          const titleElement = document.createElement("h3");
+          titleElement.textContent = groupTitle;
+          groupDiv.appendChild(titleElement);
 
-          // Сначала добавляем количество терминов, затем название
-          deckDiv.appendChild(termsCountSpan);
-          deckDiv.appendChild(titleSpan);
+          // Создаем блоки для каждой колоды
+          group.decks.forEach((deck) => {
+            const deckDiv = document.createElement("div");
+            deckDiv.className = "deck";
 
-          // Обработчик клика по колоде
-          container.appendChild(deckDiv);
-          deckDiv.addEventListener("click", () => {
-            window.location.href = `deck.html?deckId=${deck._id}`; // Исправленный URL
+            // Элемент для количества терминов
+            const termsCountSpan = document.createElement("span");
+            termsCountSpan.className = "deck-terms-count";
+            termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
+
+            // Элемент для названия колоды
+            const titleSpan = document.createElement("span");
+            titleSpan.className = "deck-title";
+            titleSpan.textContent = deck.name;
+
+            // Сначала добавляем количество терминов, затем название
+            deckDiv.appendChild(termsCountSpan);
+            deckDiv.appendChild(titleSpan);
+
+            // Обработчик клика по колоде
+            deckDiv.addEventListener("click", () => {
+              window.location.href = `deck.html?deckId=${deck._id}`; // Исправленный URL
+            });
+
+            groupDiv.appendChild(deckDiv);
           });
 
-          groupDiv.appendChild(deckDiv);
+          container.appendChild(groupDiv);
         });
-        container.appendChild(groupDiv);
-      });
+      }
     })
-
     .catch((error) => console.error("Error loading decks:", error));
+
+  // Загрузка выбранной колоды из localStorage
   const selectedDeckId = localStorage.getItem("selectedDeckId");
   if (selectedDeckId) {
-    document.getElementById("deckSelect").value = selectedDeckId;
-    // Также обновляем доступность полей ввода
-    document.getElementById("wordInput").disabled = false;
-    document.getElementById("transcription").disabled = false;
-    document.getElementById("translation").disabled = false;
-    document.getElementById("addWordButton").disabled = false;
+    const deckSelectElement = document.getElementById("deckSelect");
+    if (deckSelectElement) {
+      deckSelectElement.value = selectedDeckId;
+
+      // Также обновляем доступность полей ввода
+      document.getElementById("wordInput").disabled = false;
+      document.getElementById("transcription").disabled = false;
+      document.getElementById("translation").disabled = false;
+      document.getElementById("addWordButton").disabled = false;
+    }
   }
 }
 
@@ -655,29 +714,6 @@ function openDeckPage(deckId) {
   window.location.href = `deck.html?deckId=${deckId}`;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const deckId = urlParams.get("deckId");
-  if (deckId) {
-    fetch(`/decks/${deckId}/words`)
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("deckNameTitle").textContent = data.deckName;
-        const wordsList = document.getElementById("deckWordsList");
-        wordsList.innerHTML = "";
-        data.words.forEach((word) => {
-          const wordElement = document.createElement("div");
-          wordElement.textContent = word.englishWord; // Изменить в соответствии с моделью
-          wordsList.appendChild(wordElement);
-        });
-      })
-      .catch((error) =>
-        console.error("Ошибка при получении слов из колоды: ", error)
-      );
-  }
-});
-
-// Эту функцию нужно добавить в script.js
 function loadDeckWords() {
   const urlParams = new URLSearchParams(window.location.search);
   const deckId = urlParams.get("deckId");
@@ -687,36 +723,33 @@ function loadDeckWords() {
       .then((data) => {
         document.getElementById("deckNameTitle").textContent = data.deckName;
         const wordsList = document.getElementById("deckWordsList");
-        wordsList.innerHTML = "";
+        wordsList.innerHTML = ""; // Очищаем список, если там были предыдущие слова
 
         data.words.forEach((word) => {
-          const termContainer = document.createElement("div");
-          termContainer.className = "term-container";
+          // Создание контейнера для слова
+          const wordContainer = document.createElement("div");
+          wordContainer.className = "word-container";
 
-          const termColumn = document.createElement("div");
-          termColumn.className = "term-column";
-          termContainer.appendChild(termColumn);
+          // Создание элемента для термина (английское слово)
+          const termElement = document.createElement("div");
+          termElement.textContent = word.term;
+          termElement.className = "term";
+          wordContainer.appendChild(termElement);
 
-          const termDiv = document.createElement("div");
-          termDiv.className = "term";
-          termDiv.textContent = word.term;
-          termColumn.appendChild(termDiv);
+          // Создание элемента для транскрипции
+          const transcriptionElement = document.createElement("div");
+          transcriptionElement.textContent = word.transcription;
+          transcriptionElement.className = "transcription";
+          wordContainer.appendChild(transcriptionElement);
 
-          const transcriptionDiv = document.createElement("div");
-          transcriptionDiv.className = "transcription";
-          transcriptionDiv.textContent = word.transcription;
-          termColumn.appendChild(transcriptionDiv);
+          // Создание элемента для перевода
+          const translationElement = document.createElement("div");
+          translationElement.textContent = word.translation;
+          translationElement.className = "translation";
+          wordContainer.appendChild(translationElement);
 
-          const translationColumn = document.createElement("div");
-          translationColumn.className = "translation-column";
-          termContainer.appendChild(translationColumn);
-
-          const translationDiv = document.createElement("div");
-          translationDiv.className = "translation";
-          translationDiv.textContent = word.translation;
-          translationColumn.appendChild(translationDiv);
-
-          wordsList.appendChild(termContainer);
+          // Добавление контейнера слова в общий список слов
+          wordsList.appendChild(wordContainer);
         });
       })
       .catch((error) => {

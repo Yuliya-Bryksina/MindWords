@@ -252,7 +252,6 @@ input[readonly] {
   appearance: none; /* Убираем стандартное оформление для стандартных браузеров */
 }
 
-/* Вы можете добавить дополнительные стили для стрелочки выпадающего списка, если нужно */
 #deckSelect {
   margin-bottom: 20px;
 }
@@ -339,36 +338,31 @@ input[readonly] {
   margin-bottom: 0;
 }
 
-.term-container {
+.word-container {
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 10px;
-  padding-bottom: 10px; /* Отступ текста от линии */
-}
-
-.term-column,
-.translation-column {
-  flex: 1;
-  display: flex;
-  justify-content: left; /* Центрирование содержимого столбца */
-}
-
-.term,
-.transcription,
-.translation {
-  margin: 0 10px; /* Добавляет пространство между английским словом, транскрипцией и переводом */
+  flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку */
+  border-bottom: 1px solid #e0e0e0;
+  padding: 10px 0;
 }
 
 .term {
-  font-weight: bold;
+  min-width: 100px; /* Минимальная ширина для термина */
+  margin-right: 40px; /* Отступ между термином и транскрипцией */
+  text-align: left;
 }
 
 .transcription {
-  font-style: normal;
+  min-width: 80px; /* Минимальная ширина для транскрипции */
+  margin-right: 40px; /* Отступ между транскрипцией и переводом */
 }
 
 .translation {
-  text-align: right;
+  flex-grow: 1;
+  text-align: left;
+}
+
+.word-container:last-child {
+  border-bottom: none;
 }
 
 #deckNameTitle {

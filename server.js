@@ -117,7 +117,7 @@ app.get("/get-word-definition", async (req, res) => {
     res.send({
       term: wordDefinition.term, // Английское слово
       transcription: wordDefinition.transcription, // Транскрипция
-      // translation: wordDefinition.translation,  // Перевод, если вам нужен
+      translation: wordDefinition.translation, // Перевод, если вам нужен
     });
   } catch (error) {
     console.error(`Ошибка при поиске слова: ${error}`); // Логируем ошибку
