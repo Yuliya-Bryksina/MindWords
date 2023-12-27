@@ -204,37 +204,34 @@ function loadWord(word, context) {
   if (showDefinitionElem) showDefinitionElem.style.display = "block";
 
   // Добавляем обработчики событий, если кнопки существуют
-  if (knowWordButton && learnWordButton) {
-    // Проверяем, были ли уже добавлены обработчики событий
-    if (!knowWordButton.dataset.hasEventListeners) {
-      knowWordButton.addEventListener("click", handleKnowWordClick);
-      knowWordButton.dataset.hasEventListeners = "true";
-    }
-    if (!learnWordButton.dataset.hasEventListeners) {
-      learnWordButton.addEventListener("click", handleLearnWordClick);
-      learnWordButton.dataset.hasEventListeners = "true";
-    }
-    // Устанавливаем wordId для использования в обработчиках событий
+  if (knowWordButton) {
+    knowWordButton.removeEventListener("click", handleKnowWordClick);
+    knowWordButton.addEventListener("click", handleKnowWordClick);
     knowWordButton.dataset.wordId = word._id;
+  }
+
+  if (learnWordButton) {
+    learnWordButton.removeEventListener("click", handleLearnWordClick);
+    learnWordButton.addEventListener("click", handleLearnWordClick);
     learnWordButton.dataset.wordId = word._id;
   }
 }
 
-const knowWordButton = document.getElementById("knowWordButton");
-if (knowWordButton) {
-  knowWordButton.addEventListener("click", function () {
-    const wordId = this.dataset.wordId;
-    updateWordStatus(wordId, true);
-  });
-}
+// const knowWordButton = document.getElementById("knowWordButton");
+// if (knowWordButton) {
+//   knowWordButton.addEventListener("click", function () {
+//     const wordId = this.dataset.wordId;
+//     updateWordStatus(wordId, true);
+//   });
+// }
 
-const learnWordButton = document.getElementById("learnWordButton");
-if (learnWordButton) {
-  learnWordButton.addEventListener("click", function () {
-    const wordId = this.dataset.wordId;
-    updateWordStatus(wordId, false); // Обновляем статус слова
-  });
-}
+// const learnWordButton = document.getElementById("learnWordButton");
+// if (learnWordButton) {
+//   learnWordButton.addEventListener("click", function () {
+//     const wordId = this.dataset.wordId;
+//     updateWordStatus(wordId, false); // Обновляем статус слова
+//   });
+// }
 
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
@@ -260,7 +257,7 @@ function updateWordStatus(wordId, knowsWord) {
         loadWord(wordList[currentWordIndex], currentContext);
       } else {
         // Handle the scenario when no more words are left
-        showEndOfStudyMessage();
+        handleLastWord();
       }
     })
     .catch((error) => {
@@ -278,10 +275,7 @@ function openNewWordsModal() {
       currentWordIndex = 0;
       if (wordList.length > 0) {
         const firstWord = wordList[currentWordIndex]; // Получаем первое слово
-        loadWord(firstWord, "newWord"); // Загружаем первое слово в модальное окно для новых слов
-      } else {
-        // Использование существующей функции для отображения сообщения
-        showEndOfStudyMessage();
+        loadWord(firstWord, currentContext); // Загружаем первое слово в модальное окно для новых слов
       }
     })
     .catch((error) => {
@@ -289,7 +283,6 @@ function openNewWordsModal() {
     });
 }
 
-// Обработка открытия модального окна для слов на повторение
 function openWordsToReviewModal() {
   currentContext = "reviewWord"; // Устанавливаем контекст до выполнения запроса
   fetch("/api/words-to-review")
@@ -299,20 +292,9 @@ function openWordsToReviewModal() {
         wordList = data;
         currentWordIndex = 0;
         loadWord(wordList[currentWordIndex], currentContext);
-      } else {
-        // Использование существующей функции для отображения сообщения
-        showEndOfStudyMessage();
       }
     })
     .catch((error) => console.error("Ошибка: ", error));
-}
-
-function showEndOfStudyMessage() {
-  const modalContent = document.querySelector(".modal-content");
-  modalContent.innerHTML = "На сегодня это все, вы хорошо позанимались!";
-  // Стили для сообщения
-  modalContent.style.textAlign = "center";
-  modalContent.style.paddingTop = "20px";
 }
 
 function handleKnowWordClick() {
@@ -438,22 +420,22 @@ document.addEventListener("DOMContentLoaded", (event) => {
   //     updateWordStatus(wordId, false);
   //   });
   // }
-  const knowNewWordButton = document.getElementById("knowWordButton");
-  const learnNewWordButton = document.getElementById("learnWordButton");
+  // const knowNewWordButton = document.getElementById("knowWordButton");
+  // const learnNewWordButton = document.getElementById("learnWordButton");
 
-  if (knowNewWordButton) {
-    knowNewWordButton.addEventListener("click", function () {
-      const wordId = this.dataset.wordId;
-      updateWordStatus(wordId, true);
-    });
-  }
+  // if (knowNewWordButton) {
+  //   knowNewWordButton.addEventListener("click", function () {
+  //     const wordId = this.dataset.wordId;
+  //     updateWordStatus(wordId, true);
+  //   });
+  // }
 
-  if (learnNewWordButton) {
-    learnNewWordButton.addEventListener("click", function () {
-      const wordId = this.dataset.wordId;
-      updateWordStatus(wordId, false);
-    });
-  }
+  // if (learnNewWordButton) {
+  //   learnNewWordButton.addEventListener("click", function () {
+  //     const wordId = this.dataset.wordId;
+  //     updateWordStatus(wordId, false);
+  //   });
+  // }
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -543,36 +525,58 @@ function showDefinition() {
 }
 
 function handleLastWord() {
+  // Определяем модальное окно в зависимости от текущего контекста
+  let modalContent;
+  if (currentContext === "newWord") {
+    modalContent = document
+      .getElementById("studyModal")
+      .getElementsByClassName("modal-content")[0];
+  } else if (currentContext === "reviewWord") {
+    modalContent = document
+      .getElementById("wordsToReviewModal")
+      .getElementsByClassName("modal-content")[0];
+  }
+
   // Проверяем, является ли текущее слово последним в списке
   if (currentWordIndex === wordList.length - 1) {
-    // Скрыть все элементы
-    document.getElementById("wordDefinition").style.display = "none";
-    document.getElementById("showDefinition").style.display = "none";
-    document.getElementById("reviewWordDefinition").style.display = "none";
-    document.getElementById("showReviewDefinition").style.display = "none";
-    document.getElementById("knowWordButton").style.display = "none";
-    document.getElementById("learnWordButton").style.display = "none";
-    document.getElementById("knowReviewWordButton").style.display = "none";
-    document.getElementById("learnReviewWordButton").style.display = "none";
+    // Скрыть все элементы управления внутри модального окна
+    let elementsToHide = modalContent
+      .getElementsByClassName("modal-footer")[0]
+      .getElementsByTagName("button");
+    for (let i = 0; i < elementsToHide.length; i++) {
+      elementsToHide[i].style.display = "none";
+    }
+
+    // Скрыть элементы отображения слова и транскрипции
+    let reviewElements = [
+      "wordInEnglish",
+      "wordTranscription",
+      "reviewWordInEnglish",
+      "reviewWordTranscription",
+    ];
+    reviewElements.forEach(function (id) {
+      let element = document.getElementById(id);
+      if (element) {
+        element.style.display = "none";
+      }
+    });
 
     // Отобразить сообщение
     const message = document.createElement("p");
-    message.textContent = "На сегодня это все, вы хорошо позанимались!";
+    message.textContent = "На сегодня это все, вы хорошо позанимались!!!";
     message.style.textAlign = "center";
     message.style.marginTop = "20px";
-    message.style.fontSize = "20px"; // Установите размер шрифта по вашему усмотрению
+    message.style.fontSize = "20px";
 
-    // Очищаем модальное окно перед добавлением сообщения
-    const modalContent = document.querySelector(".modal-content");
-    modalContent.innerHTML = "";
+    // Очищаем содержимое modal-content и добавляем сообщение
+    while (modalContent.firstChild) {
+      modalContent.removeChild(modalContent.firstChild);
+    }
     modalContent.appendChild(message);
-
-    // Закрываем модальное окно через некоторое время, если нужно
-    // setTimeout(() => { document.getElementById("studyModal").style.display = "none"; }, 3000);
   } else {
     // Логика для загрузки следующего слова, если это не последнее слово
     currentWordIndex++; // Переходим к следующему слову
-    loadWord(wordList[currentWordIndex]);
+    loadWord(wordList[currentWordIndex], currentContext);
   }
 }
 
