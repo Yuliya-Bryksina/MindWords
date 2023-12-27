@@ -182,7 +182,8 @@ input[readonly] {
 }
 
 /* Стили для блока с переводом слова */
-#studyWord {
+#studyWord,
+#reviewStudyWord {
   text-align: center;
 
   font-size: 1.25em; /* Увеличьте размер шрифта, если нужно */
@@ -192,12 +193,14 @@ input[readonly] {
 }
 
 /* Стили для английского слова и транскрипции, которые будут показаны после нажатия на кнопку */
-#wordDefinition {
+#wordDefinition,
+#reviewWordDefinition {
   text-align: center;
   display: none; /* Скрыть элементы до нажатия на кнопку */
 }
 
-#showDefinition {
+#showDefinition,
+#showReviewDefinition {
   margin-top: 70px;
   border-radius: 20px;
 }

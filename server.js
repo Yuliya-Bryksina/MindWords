@@ -136,34 +136,41 @@ app.post("/update-word-status", async (req, res) => {
 });
 
 async function updateWord(wordId, knowsWord) {
-  const word = await Word.findById(wordId);
+  try {
+    const word = await Word.findById(wordId);
+    console.log("Word found:", word); // Логирование после успешного поиска слова
 
-  if (!word) {
-    throw new Error("Word not found");
+    if (!word) {
+      throw new Error("Word not found");
+    }
+
+    if (knowsWord) {
+      // Логика для ситуации, когда пользователь знает слово
+      word.repetitionLevel += 1;
+      word.efactor = calculateEFactor(word.efactor, 5);
+      word.reviewInterval = calculateInterval(
+        word.reviewInterval,
+        word.efactor,
+        word.repetitionLevel
+      );
+      word.nextReviewDate = new Date(
+        Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
+      );
+      word.studied = true;
+    } else {
+      // Логика для ситуации, когда пользователь не знает слово
+      word.repetitionLevel = 0;
+      word.reviewInterval = 1;
+      word.nextReviewDate = new Date();
+      // Поле studied не изменяется
+    }
+
+    await word.save();
+    console.log("Word saved successfully."); // Логирование после успешного сохранения слова
+  } catch (error) {
+    console.error("Error in updateWord:", error); // Логирование ошибки
+    throw error; // Это гарантирует, что ошибка будет передана дальше
   }
-
-  if (knowsWord) {
-    // Логика для успешного ответа
-    word.repetitionLevel += 1;
-    word.efactor = calculateEFactor(word.efactor, 5);
-    word.reviewInterval = calculateInterval(
-      word.reviewInterval,
-      word.efactor,
-      word.repetitionLevel
-    );
-    word.nextReviewDate = new Date(
-      Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
-    );
-    word.studied = true;
-  } else {
-    // Логика для неуспешного ответа
-    word.repetitionLevel = 0;
-    word.reviewInterval = 1;
-    word.nextReviewDate = new Date();
-    // Не изменяем статус studied
-  }
-
-  await word.save();
 }
 
 function calculateEFactor(efactor, qualityResponse) {

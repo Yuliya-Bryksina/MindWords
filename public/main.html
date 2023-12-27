@@ -88,6 +88,24 @@
         </div>
       </div>
     </div>
+    <!-- Модальное окно для слов на повторение -->
+    <div id="wordsToReviewModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="reviewStudyWord">Слово для повторения</p>
+        <div id="reviewWordDefinition" style="display: none">
+          <span id="reviewWordInEnglish"></span><br />
+          <span id="reviewWordTranscription"></span>
+        </div>
+        <button id="showReviewDefinition" onclick="showDefinition()">
+          Показать определение
+        </button>
+        <div class="modal-footer">
+          <button id="knowReviewWordButton">Я уже знаю это слово</button>
+          <button id="learnReviewWordButton">Начать учить это слово</button>
+        </div>
+      </div>
+    </div>
 
     <div
       id="newDeckModal"
