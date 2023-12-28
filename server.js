@@ -303,3 +303,41 @@ app.get("/decks/:deckId/words", async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+app.post("/update-deck/:deckId", async (req, res) => {
+  const { deckName, words } = req.body;
+  const deckId = req.params.deckId; // или получите ID колоды другим способом
+
+  console.log(`Updating deck with ID: ${deckId}`); // Логируем ID колоды
+  console.log(`New deck name: ${deckName}`); // Логируем новое имя колоды
+  console.log(`Words to update: ${JSON.stringify(words, null, 2)}`); // Логируем слова для обновления
+  try {
+    console.log(`Updating deck with ID: ${deckId}`); // Логируем ID колоды
+    console.log(`New deck name: ${deckName}`); // Логируем новое имя колоды
+    // Обновление каждого слова
+    // Обновление каждого слова
+    const updateWordPromises = words.map((word) => {
+      return Word.findByIdAndUpdate(
+        word.id,
+        {
+          term: word.term,
+          transcription: word.transcription,
+          translation: word.translation,
+        },
+        { new: true }
+      );
+    });
+    await Promise.all(updateWordPromises);
+
+    // Обновление колоды
+    const updatedDeck = await Deck.findByIdAndUpdate(
+      deckId,
+      { name: deckName },
+      { new: true }
+    );
+    res.status(200).json(updatedDeck);
+  } catch (error) {
+    console.error("Error updating words or deck:", error);
+    res.status(500).json({ message: error.message });
+  }
+});

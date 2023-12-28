@@ -391,3 +391,27 @@ input[readonly] {
   padding-bottom: 10px;
   margin-bottom: 10px;
 }
+
+/* .edit-button { */
+/* Стили для кнопки Редактировать */
+/* } */
+
+/* .save-submit-button { */
+/* Стили для кнопки Сохранить и отправить */
+/* } */
+
+.hidden {
+  display: none;
+}
+
+[contenteditable="true"] {
+  /* Общие стили для редактируемых элементов */
+  padding: 5px;
+  cursor: text;
+  box-sizing: border-box; /* Гарантирует, что padding и border включены в ширину элемента */
+}
+
+[contenteditable="true"]:focus {
+  border: 1px solid #7393a7; /* Синий контур для индикации фокуса */
+  background: #ebf5ff; /* Светло-синий фон */
+}

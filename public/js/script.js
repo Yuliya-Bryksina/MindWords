@@ -217,22 +217,6 @@ function loadWord(word, context) {
   }
 }
 
-// const knowWordButton = document.getElementById("knowWordButton");
-// if (knowWordButton) {
-//   knowWordButton.addEventListener("click", function () {
-//     const wordId = this.dataset.wordId;
-//     updateWordStatus(wordId, true);
-//   });
-// }
-
-// const learnWordButton = document.getElementById("learnWordButton");
-// if (learnWordButton) {
-//   learnWordButton.addEventListener("click", function () {
-//     const wordId = this.dataset.wordId;
-//     updateWordStatus(wordId, false); // Обновляем статус слова
-//   });
-// }
-
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
   fetch("/update-word-status", {
@@ -402,40 +386,108 @@ document.addEventListener("DOMContentLoaded", (event) => {
       toggleInputFields(false); // Деактивируем поля
     }
   }
-  // const knowReviewWordButton = document.getElementById("knowReviewWordButton");
-  // const learnReviewWordButton = document.getElementById(
-  //   "learnReviewWordButton"
-  // );
 
-  // if (knowReviewWordButton) {
-  //   knowReviewWordButton.addEventListener("click", function () {
-  //     const wordId = this.dataset.wordId;
-  //     updateWordStatus(wordId, true);
-  //   });
-  // }
+  const saveSubmitButton = document.getElementById("saveSubmitButton");
+  const deckNameTitle = document.getElementById("deckNameTitle");
+  const editableFields = document.querySelectorAll(
+    ".term, .transcription, .translation"
+  );
+  let isEdited = false;
 
-  // if (learnReviewWordButton) {
-  //   learnReviewWordButton.addEventListener("click", function () {
-  //     const wordId = this.dataset.wordId;
-  //     updateWordStatus(wordId, false);
-  //   });
-  // }
-  // const knowNewWordButton = document.getElementById("knowWordButton");
-  // const learnNewWordButton = document.getElementById("learnWordButton");
+  // Функция для переключения режима редактирования
+  function toggleEditMode() {
+    // Переключаем состояние редактирования для заголовка колоды
+    deckNameTitle.contentEditable = !(deckNameTitle.contentEditable === "true");
 
-  // if (knowNewWordButton) {
-  //   knowNewWordButton.addEventListener("click", function () {
-  //     const wordId = this.dataset.wordId;
-  //     updateWordStatus(wordId, true);
-  //   });
-  // }
+    // Переключаем состояние редактирования для всех полей
+    const fields = document.querySelectorAll(
+      ".term, .transcription, .translation"
+    );
+    fields.forEach((field) => {
+      const isEditable = field.contentEditable === "true";
+      field.contentEditable = !isEditable;
+    });
 
-  // if (learnNewWordButton) {
-  //   learnNewWordButton.addEventListener("click", function () {
-  //     const wordId = this.dataset.wordId;
-  //     updateWordStatus(wordId, false);
-  //   });
-  // }
+    // Переключаем видимость кнопки "Сохранить и отправить"
+    saveSubmitButton.classList.toggle("hidden");
+    isEdited = !isEdited; // Переключаем флаг редактирования
+  }
+
+  // Событие нажатия на кнопку Редактировать
+  const editButton = document.getElementById("editButton");
+  if (editButton) {
+    editButton.addEventListener("click", function () {
+      console.log("Кнопка 'Редактировать' нажата");
+      toggleEditMode();
+      isEdited = true; // Отметить, что были внесены изменения
+    });
+  } else {
+    console.log("editButton не найден, возможно мы не на странице deck.html");
+  }
+
+  // Событие нажатия на кнопку Сохранить и отправить
+  if (saveSubmitButton && deckNameTitle && editableFields.length > 0) {
+    saveSubmitButton.addEventListener("click", function () {
+      const updatedWords = Array.from(
+        document.querySelectorAll(".word-container")
+      ).map((container) => {
+        const termElement = container.querySelector(".term");
+        const transcriptionElement = container.querySelector(".transcription");
+        const translationElement = container.querySelector(".translation");
+
+        console.log("Container", container);
+        console.log("Term element", termElement);
+        console.log("Transcription element", transcriptionElement);
+        console.log("Translation element", translationElement);
+
+        return {
+          id: container.getAttribute("data-id"),
+          term: termElement ? termElement.textContent : "",
+          transcription: transcriptionElement
+            ? transcriptionElement.textContent
+            : "",
+          translation: translationElement ? translationElement.textContent : "",
+        };
+      });
+
+      // Получение deckId из URL или другого источника, в зависимости от вашей логики
+      const urlParams = new URLSearchParams(window.location.search);
+      const deckId = urlParams.get("deckId");
+
+      if (!deckId) {
+        console.error("Deck ID is not found.");
+        return;
+      }
+
+      // Отправка данных на сервер
+      fetch(`/update-deck/${deckId}`, {
+        // Убедитесь, что URL корректен
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          deckId: deckId,
+          deckName: deckNameTitle.textContent,
+          words: updatedWords,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok.");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Success:", data);
+          toggleEditMode(); // Выйти из режима редактирования
+          isEdited = false; // Сбросить флаг изменений
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+  }
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -881,26 +933,24 @@ function loadDeckWords() {
           // Создание контейнера для слова
           const wordContainer = document.createElement("div");
           wordContainer.className = "word-container";
+          wordContainer.setAttribute("data-id", word._id);
 
-          // Создание элемента для термина (английское слово)
           const termElement = document.createElement("div");
-          termElement.textContent = word.term;
           termElement.className = "term";
-          wordContainer.appendChild(termElement);
+          termElement.textContent = word.term;
 
-          // Создание элемента для транскрипции
           const transcriptionElement = document.createElement("div");
-          transcriptionElement.textContent = word.transcription;
           transcriptionElement.className = "transcription";
-          wordContainer.appendChild(transcriptionElement);
+          transcriptionElement.textContent = word.transcription;
 
-          // Создание элемента для перевода
           const translationElement = document.createElement("div");
-          translationElement.textContent = word.translation;
           translationElement.className = "translation";
+          translationElement.textContent = word.translation;
+
+          wordContainer.appendChild(termElement);
+          wordContainer.appendChild(transcriptionElement);
           wordContainer.appendChild(translationElement);
 
-          // Добавление контейнера слова в общий список слов
           wordsList.appendChild(wordContainer);
         });
       })
