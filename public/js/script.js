@@ -1,6 +1,7 @@
 let currentWordIndex = 0; // Индекс текущего слова
 let wordList = []; // Список слов
 let currentContext = ""; // "newWord" или "reviewWord"
+let wordChanges = {}; // Ключ - это ID слова, значение - объект с изменениями
 
 if (window.location.pathname.includes("/deck.html")) {
   loadDeckWords();
@@ -349,6 +350,27 @@ function toggleInputFields(enabled) {
   document.getElementById("addWordButton").disabled = !enabled;
 }
 
+function onWordInputChange(container) {
+  const id = container.getAttribute("data-id");
+  const termElement = container.querySelector(".term");
+  const transcriptionElement = container.querySelector(".transcription");
+  const translationElement = container.querySelector(".translation");
+
+  // Логирование для отладки
+  console.log("Изменение слова с ID:", id);
+
+  wordChanges[id] = {
+    id: id,
+    term: termElement.textContent,
+    transcription: transcriptionElement.textContent,
+    translation: translationElement.textContent,
+  };
+  // Логирование текущего состояния объекта wordChanges
+  console.log("Текущее состояние wordChanges:", wordChanges);
+  console.log("Изменение слова с ID:", id);
+  console.log(wordChanges[id]);
+}
+
 document.addEventListener("DOMContentLoaded", (event) => {
   const wordInput = document.getElementById("wordInput");
   if (wordInput) {
@@ -428,29 +450,13 @@ document.addEventListener("DOMContentLoaded", (event) => {
   // Событие нажатия на кнопку Сохранить и отправить
   if (saveSubmitButton && deckNameTitle && editableFields.length > 0) {
     saveSubmitButton.addEventListener("click", function () {
-      const updatedWords = Array.from(
-        document.querySelectorAll(".word-container")
-      ).map((container) => {
-        const termElement = container.querySelector(".term");
-        const transcriptionElement = container.querySelector(".transcription");
-        const translationElement = container.querySelector(".translation");
+      // Фильтруем и отправляем только измененные слова
+      const updatedWords = Object.values(wordChanges);
 
-        console.log("Container", container);
-        console.log("Term element", termElement);
-        console.log("Transcription element", transcriptionElement);
-        console.log("Translation element", translationElement);
+      // Логирование отправляемых данных
+      console.log("Отправка на сервер следующих слов:", updatedWords);
 
-        return {
-          id: container.getAttribute("data-id"),
-          term: termElement ? termElement.textContent : "",
-          transcription: transcriptionElement
-            ? transcriptionElement.textContent
-            : "",
-          translation: translationElement ? translationElement.textContent : "",
-        };
-      });
-
-      // Получение deckId из URL или другого источника, в зависимости от вашей логики
+      // Получение deckId из URL или другого источника
       const urlParams = new URLSearchParams(window.location.search);
       const deckId = urlParams.get("deckId");
 
@@ -461,13 +467,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
       // Отправка данных на сервер
       fetch(`/update-deck/${deckId}`, {
-        // Убедитесь, что URL корректен
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          deckId: deckId,
           deckName: deckNameTitle.textContent,
           words: updatedWords,
         }),
@@ -480,14 +484,25 @@ document.addEventListener("DOMContentLoaded", (event) => {
         })
         .then((data) => {
           console.log("Success:", data);
+          // Сбросить объект с изменениями после успешной отправки
+          wordChanges = {}; // <-- Обнуление объекта wordChanges происходит здесь
           toggleEditMode(); // Выйти из режима редактирования
-          isEdited = false; // Сбросить флаг изменений
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     });
   }
+  const wordContainers = document.querySelectorAll(".word-container");
+  wordContainers.forEach((container) => {
+    ["term", "transcription", "translation"].forEach((className) => {
+      const element = container.querySelector(`.${className}`);
+      element.addEventListener("input", () => {
+        console.log(`Изменение в классе ${className}`);
+        onWordInputChange(container);
+      });
+    });
+  });
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -918,6 +933,15 @@ function openDeckPage(deckId) {
   window.location.href = `deck.html?deckId=${deckId}`;
 }
 
+// Функция для добавления слушателей событий
+function addInputListeners(container) {
+  // Добавляем обработчик события на каждое поле ввода в контейнере
+  ["term", "transcription", "translation"].forEach((className) => {
+    const element = container.querySelector(`.${className}`);
+    element.addEventListener("input", () => onWordInputChange(container));
+  });
+}
+
 function loadDeckWords() {
   const urlParams = new URLSearchParams(window.location.search);
   const deckId = urlParams.get("deckId");
@@ -952,10 +976,23 @@ function loadDeckWords() {
           wordContainer.appendChild(translationElement);
 
           wordsList.appendChild(wordContainer);
+
+          addInputListeners(wordContainer);
         });
       })
       .catch((error) => {
         console.error("Ошибка при получении слов из колоды: ", error);
       });
   }
+}
+
+function onWordInputChange(container) {
+  // Получаем ID, term, transcription и translation из контейнера
+  const id = container.getAttribute("data-id");
+  const term = container.querySelector(".term").textContent;
+  const transcription = container.querySelector(".transcription").textContent;
+  const translation = container.querySelector(".translation").textContent;
+
+  // Обновляем объект wordChanges для этого конкретного слова
+  wordChanges[id] = { id, term, transcription, translation };
 }
