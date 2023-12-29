@@ -4,6 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const router = express.Router();
 
 const app = express();
 
@@ -336,5 +337,45 @@ app.post("/update-deck/:deckId", async (req, res) => {
   } catch (error) {
     console.error("Error while updating deck:", error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+async function getLastUpdatedDateForDecks() {
+  const decks = await Deck.find(); // Получаем все колоды
+
+  const lastUpdatedDates = await Promise.all(
+    decks.map(async (deck) => {
+      // Находим последнее обновленное слово в колоде
+      const lastWordUpdate = await Word.findOne({ _id: { $in: deck.words } })
+        .sort({ updatedAt: -1 }) // Сортируем слова по дате обновления
+        .select("updatedAt -_id"); // Выбираем только нужное поле
+
+      return {
+        deckId: deck._id,
+        lastUpdate: lastWordUpdate ? lastWordUpdate.updatedAt : deck.createdAt,
+      };
+    })
+  );
+
+  return lastUpdatedDates;
+}
+
+app.get("/decks/last-updated", async (req, res) => {
+  try {
+    const decks = await Deck.find().populate({
+      path: "words",
+      options: { sort: { updatedAt: -1 } }, // Сортировка слов по дате обновления
+    });
+
+    // Создаем объект, который будет содержать даты последнего обновления
+    const deckUpdates = decks.map((deck) => {
+      const lastUpdate = deck.words[0] ? deck.words[0].updatedAt : null;
+      return { deckId: deck._id, lastUpdate };
+    });
+
+    res.json(deckUpdates);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
   }
 });

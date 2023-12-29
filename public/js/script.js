@@ -807,65 +807,71 @@ getDecks();
 
 // Функция для загрузки и отображения колод
 function loadDecks() {
-  fetch("/decks/grouped")
+  // Получаем данные о последних обновлениях
+  fetch("/decks/last-updated")
     .then((response) => response.json())
-    .then((groups) => {
-      const container = document.getElementById("decksContainer");
-      if (container) {
-        container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
+    .then((lastUpdates) => {
+      // Получаем группированные данные о колодах
+      fetch("/decks/grouped")
+        .then((response) => response.json())
+        .then((groups) => {
+          const container = document.getElementById("decksContainer");
+          container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
 
-        groups.forEach((group) => {
-          // Создайте HTML для отображения колод, сгруппированных по месяцам
-          const groupDiv = document.createElement("div");
-          groupDiv.className = "deck-group";
+          // Объединяем данные о колодах с информацией о последних обновлениях
+          groups.forEach((group) => {
+            group.decks.forEach((deck) => {
+              // Находим информацию о последнем обновлении для данной колоды
+              const lastUpdateInfo = lastUpdates.find(
+                (update) => update.deckId === deck._id
+              );
+              const lastUpdateMonth = lastUpdateInfo
+                ? formatMonthYear(lastUpdateInfo.lastUpdate)
+                : "Дата неизвестна";
 
-          // Получаем текущий месяц и год
-          const currentDate = new Date();
-          const currentYearMonth = `${currentDate.getFullYear()}-${String(
-            currentDate.getMonth() + 1
-          ).padStart(2, "0")}`;
+              // Находим или создаем группу для этого месяца обновления
+              let monthGroup = container.querySelector(
+                `.deck-group[data-month="${lastUpdateMonth}"]`
+              );
+              if (!monthGroup) {
+                monthGroup = document.createElement("div");
+                monthGroup.className = "deck-group";
+                monthGroup.setAttribute("data-month", lastUpdateMonth);
+                const monthTitle = document.createElement("h3");
+                monthTitle.textContent = lastUpdateMonth;
+                monthGroup.appendChild(monthTitle);
+                container.appendChild(monthGroup);
+              }
 
-          // Сравниваем с годом и месяцем группы
-          const groupTitle =
-            group._id === currentYearMonth ? "В этом месяце" : group._id;
+              // Создаем элемент колоды
+              const deckDiv = document.createElement("div");
+              deckDiv.className = "deck";
 
-          // Заменяем непосредственно содержимое заголовка
-          const titleElement = document.createElement("h3");
-          titleElement.textContent = groupTitle;
-          groupDiv.appendChild(titleElement);
+              const termsCountSpan = document.createElement("span");
+              termsCountSpan.className = "deck-terms-count";
+              termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
 
-          // Создаем блоки для каждой колоды
-          group.decks.forEach((deck) => {
-            const deckDiv = document.createElement("div");
-            deckDiv.className = "deck";
+              const titleSpan = document.createElement("span");
+              titleSpan.className = "deck-title";
+              titleSpan.textContent = deck.name;
 
-            // Элемент для количества терминов
-            const termsCountSpan = document.createElement("span");
-            termsCountSpan.className = "deck-terms-count";
-            termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
+              deckDiv.appendChild(termsCountSpan);
+              deckDiv.appendChild(titleSpan);
+              monthGroup.appendChild(deckDiv); // Добавляем колоду в соответствующую группу
 
-            // Элемент для названия колоды
-            const titleSpan = document.createElement("span");
-            titleSpan.className = "deck-title";
-            titleSpan.textContent = deck.name;
-
-            // Сначала добавляем количество терминов, затем название
-            deckDiv.appendChild(termsCountSpan);
-            deckDiv.appendChild(titleSpan);
-
-            // Обработчик клика по колоде
-            deckDiv.addEventListener("click", () => {
-              window.location.href = `deck.html?deckId=${deck._id}`; // Исправленный URL
+              deckDiv.addEventListener("click", () => {
+                window.location.href = `deck.html?deckId=${deck._id}`;
+              });
             });
-
-            groupDiv.appendChild(deckDiv);
           });
-
-          container.appendChild(groupDiv);
+        })
+        .catch((error) => {
+          console.error("Error loading decks:", error);
         });
-      }
     })
-    .catch((error) => console.error("Error loading decks:", error));
+    .catch((error) => {
+      console.error("Error loading last updates:", error);
+    });
 
   // Загрузка выбранной колоды из localStorage
   const selectedDeckId = localStorage.getItem("selectedDeckId");
@@ -880,6 +886,46 @@ function loadDecks() {
       document.getElementById("translation").disabled = false;
       document.getElementById("addWordButton").disabled = false;
     }
+  }
+}
+
+function createDeckElement(deck) {
+  const deckDiv = document.createElement("div");
+  deckDiv.className = "deck";
+
+  const termsCountSpan = document.createElement("span");
+  termsCountSpan.className = "deck-terms-count";
+  termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "deck-title";
+  titleSpan.textContent = deck.name;
+
+  deckDiv.appendChild(termsCountSpan);
+  deckDiv.appendChild(titleSpan);
+
+  deckDiv.addEventListener("click", () => {
+    window.location.href = `deck.html?deckId=${deck._id}`;
+  });
+
+  return deckDiv;
+}
+
+function formatMonthYear(date) {
+  const currentDate = new Date();
+  const dateToFormat = new Date(date);
+
+  // Проверяем, является ли дата обновления текущим месяцем
+  if (
+    currentDate.getFullYear() === dateToFormat.getFullYear() &&
+    currentDate.getMonth() === dateToFormat.getMonth()
+  ) {
+    return "В этом месяце";
+  } else {
+    return dateToFormat.toLocaleDateString("ru-RU", {
+      year: "numeric",
+      month: "long",
+    });
   }
 }
 
