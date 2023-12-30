@@ -379,3 +379,25 @@ app.get("/decks/last-updated", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+app.post("/delete-word", async (req, res) => {
+  console.log("Запрос на удаление слова получен:", req.body); // Логирование тела запроса
+  const { wordId } = req.body;
+  try {
+    // Удаление слова из коллекции Word
+    const wordDeleteResult = await Word.findByIdAndDelete(wordId);
+    console.log("Результат удаления слова:", wordDeleteResult);
+
+    // Удаление слова из коллекции Deck
+    const deckUpdateResult = await Deck.updateMany(
+      {},
+      { $pull: { words: wordId } }
+    );
+    console.log("Результат обновления колод:", deckUpdateResult);
+
+    res.json({ success: true, message: "Word deleted successfully." });
+  } catch (error) {
+    console.error("Ошибка при удалении слова:", error);
+    res.status(500).json({ success: false, message: "Error deleting word." });
+  }
+});

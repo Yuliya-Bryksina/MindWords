@@ -346,7 +346,8 @@ input[readonly] {
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 20px; /* Добавляем отступ снизу для всех .words-container */
-  padding-bottom: 10px; /* Добавляем отступ снизу для создания пространства под линию */
+  padding-bottom: 10px;
+  padding-right: 40px; /* Добавляем отступ снизу для создания пространства под линию */
   margin-top: 10px;
   position: relative; /* Для позиционирования псевдо-элемента */
 }
@@ -366,6 +367,7 @@ input[readonly] {
 .words-container:last-child {
   margin-bottom: 0;
   padding-bottom: 0;
+  position: relative; /* Для позиционирования кнопки удаления */
 }
 
 .term,
@@ -381,12 +383,25 @@ input[readonly] {
 }
 
 .words-container > div:last-child {
-  margin-right: 0;
-}
-
-.words-container > div:last-child {
   margin-right: 0; /* Убираем отступ справа у последнего элемента в контейнере */
 }
+
+.delete-btn {
+  position: absolute;
+  top: 50%; /* центрировать вертикально */
+  right: 10px; /* отступ справа от края контейнера */
+  transform: translateY(-50%); /* сместить вверх на половину своей высоты */
+  width: 30px; /* фиксированная ширина */
+  height: 30px; /* фиксированная высота */
+  visibility: hidden; /* изначально скрыть кнопку */
+  cursor: pointer;
+  /* другие стили кнопки, такие как фон, рамки и т.д. */
+}
+
+.words-container:hover .delete-btn {
+  visibility: visible;
+}
+
 #deckNameTitle {
   position: relative;
   padding-bottom: 10px;

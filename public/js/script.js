@@ -433,6 +433,14 @@ document.addEventListener("DOMContentLoaded", (event) => {
     // Переключаем видимость кнопки "Сохранить и отправить"
     saveSubmitButton.classList.toggle("hidden");
     isEdited = !isEdited; // Переключаем флаг редактирования
+
+    // Переключение видимости кнопок удаления
+    const deleteButtons = document.querySelectorAll(".delete-btn");
+    deleteButtons.forEach((button) => {
+      button.style.display = isEdited ? "block" : "none";
+    });
+
+    isEdited = !isEdited; // Переключаем флаг редактирования
   }
 
   // Событие нажатия на кнопку Редактировать
@@ -1024,6 +1032,17 @@ function loadDeckWords() {
           const translationElement = document.createElement("div");
           translationElement.className = "translation";
           translationElement.textContent = word.translation;
+          const deleteBtn = document.createElement("button");
+          deleteBtn.classList.add("delete-btn");
+          deleteBtn.textContent = "X";
+          deleteBtn.style.display = "none"; // изначально скрыта
+          deleteBtn.onclick = function () {
+            // Измените этот вызов, чтобы передать идентификатор слова
+            const wordId = wordContainer.getAttribute("data-id");
+            confirmDeletion(wordId, wordContainer);
+          };
+
+          wordContainer.appendChild(deleteBtn);
 
           wordContainer.appendChild(termElement);
           wordContainer.appendChild(transcriptionElement);
@@ -1037,6 +1056,46 @@ function loadDeckWords() {
       .catch((error) => {
         console.error("Ошибка при получении слов из колоды: ", error);
       });
+  }
+}
+
+// Функция для показа кнопки удаления
+function showDeleteButtons() {
+  const deleteButtons = document.querySelectorAll(".delete-btn");
+  deleteButtons.forEach((button) => {
+    button.style.display = "inline-block";
+    button.addEventListener("click", function (event) {
+      const wordContainer = event.target.closest(".words-container");
+      const wordId = wordContainer.dataset.id; // Используйте dataset.id для получения идентификатора слова
+      confirmDeletion(wordId, wordContainer);
+    });
+  });
+}
+
+// Функция для подтверждения удаления
+function confirmDeletion(wordId, wordContainer) {
+  if (confirm(`Вы действительно хотите удалить это слово?`)) {
+    deleteWord(wordId, wordContainer);
+  }
+}
+
+async function deleteWord(wordId, wordContainer) {
+  try {
+    const response = await fetch("/delete-word", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ wordId: wordId }), // Убедитесь, что здесь передается идентификатор слова
+    });
+    const data = await response.json();
+    if (data.success) {
+      wordContainer.remove(); // Удалите элемент из DOM, если запрос успешен
+    } else {
+      alert("Ошибка при удалении слова: " + data.message);
+    }
+  } catch (error) {
+    console.error("Ошибка при запросе на сервер:", error);
   }
 }
 
