@@ -511,6 +511,43 @@ document.addEventListener("DOMContentLoaded", (event) => {
       });
     });
   });
+  const deleteDeckButton = document.querySelector(".delete-deck-button");
+  if (deleteDeckButton) {
+    // Добавляем обработчик событий для кнопки
+    deleteDeckButton.addEventListener("click", (event) => {
+      // Предотвращаем всплытие события клика, чтобы не активировать другие клики
+      event.stopPropagation();
+      // Подтверждение действия пользователем
+      if (confirm("Вы уверены, что хотите удалить эту колоду?")) {
+        // TODO: Реализуйте логику удаления колоды здесь
+        console.log("Колода будет удалена");
+      }
+    });
+  }
+  const deleteConfirmationModal = document.getElementById(
+    "deleteConfirmationModal"
+  );
+  const deckNameToDelete = document.getElementById("deckNameToDelete");
+  const cancelDeleteButton = document.getElementById("cancelDelete");
+  const confirmDeleteButton = document.getElementById("confirmDelete");
+
+  // Настройка и показ модального окна при клике на кнопку удаления
+  deleteDeckButton.addEventListener("click", (event) => {
+    deckNameToDelete.textContent = deckNameTitle.textContent; // Используем textContent здесь
+    deleteConfirmationModal.style.display = "flex";
+  });
+
+  // Закрытие модального окна без удаления
+  cancelDeleteButton.addEventListener("click", (event) => {
+    deleteConfirmationModal.style.display = "none";
+  });
+
+  // Подтверждение удаления и закрытие модального окна
+  confirmDeleteButton.addEventListener("click", (event) => {
+    // TODO: Реализуйте логику удаления колоды здесь
+    console.log(`Колода "${deckNameTitle.textContent}" будет удалена`); // И снова используем textContent
+    deleteConfirmationModal.style.display = "none";
+  });
 });
 
 const deckSelectElement = document.getElementById("deckSelect");

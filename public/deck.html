@@ -4,15 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+
     <title>Колода слов</title>
   </head>
   <body>
     <section class="rounded-section">
       <!-- Используйте тот же класс, что и в main.html -->
       <div class="header-with-button">
-        <!-- По структуре похоже на заголовок с кнопкой в main.html -->
         <h1 id="deckNameTitle">Название колоды</h1>
-        <button id="editButton" class="edit-button">Редактировать</button>
+        <button id="editButton" class="button-icon edit-button">
+          <i class="fas fa-pencil-alt"></i>
+          <!-- Иконка карандаша -->
+        </button>
+        <button id="deleteDeckButton" class="button-icon delete-button">
+          <i class="fas fa-trash"></i>
+          <!-- Иконка корзины -->
+        </button>
       </div>
       <div id="deckWordsList">
         <div class="term"></div>
@@ -20,6 +31,24 @@
         <div class="translation"></div>
       </div>
     </section>
+    <!-- Модальное окно для подтверждения удаления -->
+    <div id="deleteConfirmationModal" class="modal">
+      <div class="modal-content">
+        <p>
+          Вы уверены, что хотите удалить эту колоду? Колода "<span
+            id="deckNameToDelete"
+          ></span
+          >" будет удалена безвозвратно.
+        </p>
+        <div class="modal-actions">
+          <button id="cancelDelete" class="modal-button">Нет</button>
+          <button id="confirmDelete" class="modal-button modal-button-danger">
+            Да
+          </button>
+        </div>
+      </div>
+    </div>
+
     <button id="saveSubmitButton" class="save-submit-button hidden">
       Сохранить и отправить
     </button>

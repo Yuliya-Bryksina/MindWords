@@ -216,8 +216,9 @@ input[readonly] {
 }
 
 .header-with-button {
-  justify-content: space-between; /* Располагаем элементы на противоположных концах контейнера */
-  align-items: center; /* Центрируем элементы по вертикали */
+  display: flex;
+  justify-content: space-between; /* Размещает дочерние элементы на противоположных концах контейнера */
+  align-items: center; /* Центрирование дочерних элементов по вертикали */
 }
 /* Стили для кнопки создания колоды */
 .create-deck-button {
@@ -420,14 +421,6 @@ input[readonly] {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* .edit-button { */
-/* Стили для кнопки Редактировать */
-/* } */
-
-/* .save-submit-button { */
-/* Стили для кнопки Сохранить и отправить */
-/* } */
-
 .hidden {
   display: none;
 }
@@ -442,4 +435,42 @@ input[readonly] {
 [contenteditable="true"]:focus {
   border: 1px solid #7393a7; /* Синий контур для индикации фокуса */
   background: #ebf5ff; /* Светло-синий фон */
+}
+
+/* Стили для кнопки выпадающего меню */
+.delete-deck-button {
+  margin-left: 10px; /* Добавляет отступ слева от кнопки Редактировать */
+  /* Остальные стили для кнопки (размер, цвет и т.д.) */
+}
+.modal-button {
+  padding: 10px 20px; /* Паддинг для кнопок */
+  margin: 0 10px; /* Отступы между кнопками */
+  border: none; /* Убрать границы */
+  border-radius: 5px; /* Закругление углов */
+  cursor: pointer; /* Курсор в виде указателя */
+}
+
+.modal-button-danger {
+  background-color: red; /* Красный фон для кнопки "Да" */
+  color: white; /* Белый текст */
+}
+
+.button-icon {
+  background: #f5f5f5; /* Цвет фона кнопки */
+  border: 1px solid #ddd; /* Цвет границы кнопки */
+  border-radius: 4px; /* Слегка закругленные углы */
+  width: 40px; /* Ширина кнопки */
+  height: 40px; /* Высота кнопки */
+  display: flex;
+  justify-content: center; /* Центрирование иконки по горизонтали */
+  align-items: center; /* Центрирование иконки по вертикали */
+  cursor: pointer; /* Курсор в виде указателя */
+  font-size: 20px; /* Размер иконок */
+}
+.edit-button {
+  color: #4a90e2; /* Цвет иконки карандаша */
+}
+
+.delete-button {
+  color: #f44336; /* Цвет иконки корзины */
 }
