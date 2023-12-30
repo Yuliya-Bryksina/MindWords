@@ -202,12 +202,14 @@ app.listen(PORT, () => {
 });
 
 //---Создание функционала колод---//
-// Путь к вашей модели Deck
 
 // Создание новой колоды
 app.post("/decks", async (req, res) => {
   try {
-    const deck = new Deck({ name: req.body.name });
+    const deck = new Deck({
+      name: req.body.name,
+      updatedAt: Date.now(), // Явно устанавливаем текущую дату обновления
+    });
     await deck.save();
     res.status(201).send(deck);
   } catch (error) {
@@ -369,7 +371,8 @@ app.get("/decks/last-updated", async (req, res) => {
 
     // Создаем объект, который будет содержать даты последнего обновления
     const deckUpdates = decks.map((deck) => {
-      const lastUpdate = deck.words[0] ? deck.words[0].updatedAt : null;
+      const lastUpdate =
+        deck.words.length > 0 ? deck.words[0].updatedAt : deck.createdAt;
       return { deckId: deck._id, lastUpdate };
     });
 
