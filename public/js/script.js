@@ -493,7 +493,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
         });
     });
   }
-  const wordContainers = document.querySelectorAll(".word-container");
+  const wordContainers = document.querySelectorAll(".words-container");
   wordContainers.forEach((container) => {
     ["term", "transcription", "translation"].forEach((className) => {
       const element = container.querySelector(`.${className}`);
@@ -807,71 +807,79 @@ getDecks();
 
 // Функция для загрузки и отображения колод
 function loadDecks() {
-  // Получаем данные о последних обновлениях
-  fetch("/decks/last-updated")
-    .then((response) => response.json())
-    .then((lastUpdates) => {
-      // Получаем группированные данные о колодах
-      fetch("/decks/grouped")
-        .then((response) => response.json())
-        .then((groups) => {
-          const container = document.getElementById("decksContainer");
-          container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
+  // Проверяем, существует ли элемент на странице
+  const container = document.getElementById("decksContainer");
+  if (container) {
+    // Получаем данные о последних обновлениях
+    fetch("/decks/last-updated")
+      .then((response) => response.json())
+      .then((lastUpdates) => {
+        // Получаем группированные данные о колодах
+        fetch("/decks/grouped")
+          .then((response) => response.json())
+          .then((groups) => {
+            container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
 
-          // Объединяем данные о колодах с информацией о последних обновлениях
-          groups.forEach((group) => {
-            group.decks.forEach((deck) => {
-              // Находим информацию о последнем обновлении для данной колоды
-              const lastUpdateInfo = lastUpdates.find(
-                (update) => update.deckId === deck._id
-              );
-              const lastUpdateMonth = lastUpdateInfo
-                ? formatMonthYear(lastUpdateInfo.lastUpdate)
-                : "Дата неизвестна";
+            // Объединяем данные о колодах с информацией о последних обновлениях
+            groups.forEach((group) => {
+              group.decks.forEach((deck) => {
+                // Находим информацию о последнем обновлении для данной колоды
+                const lastUpdateInfo = lastUpdates.find(
+                  (update) => update.deckId === deck._id
+                );
+                const lastUpdateMonth = lastUpdateInfo
+                  ? formatMonthYear(lastUpdateInfo.lastUpdate)
+                  : "Дата неизвестна";
 
-              // Находим или создаем группу для этого месяца обновления
-              let monthGroup = container.querySelector(
-                `.deck-group[data-month="${lastUpdateMonth}"]`
-              );
-              if (!monthGroup) {
-                monthGroup = document.createElement("div");
-                monthGroup.className = "deck-group";
-                monthGroup.setAttribute("data-month", lastUpdateMonth);
-                const monthTitle = document.createElement("h3");
-                monthTitle.textContent = lastUpdateMonth;
-                monthGroup.appendChild(monthTitle);
-                container.appendChild(monthGroup);
-              }
+                // Находим или создаем группу для этого месяца обновления
+                let monthGroup = container.querySelector(
+                  `.deck-group[data-month="${lastUpdateMonth}"]`
+                );
+                if (!monthGroup) {
+                  monthGroup = document.createElement("div");
+                  monthGroup.className = "deck-group";
+                  monthGroup.setAttribute("data-month", lastUpdateMonth);
+                  const monthTitle = document.createElement("h3");
+                  monthTitle.textContent = lastUpdateMonth;
+                  monthGroup.appendChild(monthTitle);
+                  container.appendChild(monthGroup);
+                }
 
-              // Создаем элемент колоды
-              const deckDiv = document.createElement("div");
-              deckDiv.className = "deck";
+                // Создаем элемент колоды
+                const deckDiv = document.createElement("div");
+                deckDiv.className = "deck";
 
-              const termsCountSpan = document.createElement("span");
-              termsCountSpan.className = "deck-terms-count";
-              termsCountSpan.textContent = `${deck.termCount || "0"} терминов`;
+                const termsCountSpan = document.createElement("span");
+                termsCountSpan.className = "deck-terms-count";
+                termsCountSpan.textContent = `${
+                  deck.termCount || "0"
+                } терминов`;
 
-              const titleSpan = document.createElement("span");
-              titleSpan.className = "deck-title";
-              titleSpan.textContent = deck.name;
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "deck-title";
+                titleSpan.textContent = deck.name;
 
-              deckDiv.appendChild(termsCountSpan);
-              deckDiv.appendChild(titleSpan);
-              monthGroup.appendChild(deckDiv); // Добавляем колоду в соответствующую группу
+                deckDiv.appendChild(termsCountSpan);
+                deckDiv.appendChild(titleSpan);
+                monthGroup.appendChild(deckDiv); // Добавляем колоду в соответствующую группу
 
-              deckDiv.addEventListener("click", () => {
-                window.location.href = `deck.html?deckId=${deck._id}`;
+                deckDiv.addEventListener("click", () => {
+                  window.location.href = `deck.html?deckId=${deck._id}`;
+                });
               });
             });
+          })
+          .catch((error) => {
+            console.error("Error loading decks:", error);
           });
-        })
-        .catch((error) => {
-          console.error("Error loading decks:", error);
-        });
-    })
-    .catch((error) => {
-      console.error("Error loading last updates:", error);
-    });
+      })
+      .catch((error) => {
+        console.error("Error loading last updates:", error);
+      });
+  } else {
+    // Если элемент не найден, здесь можно добавить код для обработки этого случая.
+    console.log("Контейнер 'decksContainer' не найден на этой странице.");
+  }
 
   // Загрузка выбранной колоды из localStorage
   const selectedDeckId = localStorage.getItem("selectedDeckId");
@@ -1002,7 +1010,7 @@ function loadDeckWords() {
         data.words.forEach((word) => {
           // Создание контейнера для слова
           const wordContainer = document.createElement("div");
-          wordContainer.className = "word-container";
+          wordContainer.className = "words-container";
           wordContainer.setAttribute("data-id", word._id);
 
           const termElement = document.createElement("div");

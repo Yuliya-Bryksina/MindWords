@@ -341,33 +341,52 @@ input[readonly] {
   margin-bottom: 0;
 }
 
-.word-container {
+.words-container {
   display: flex;
-  flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку */
-  border-bottom: 1px solid #e0e0e0;
-  padding: 10px 0;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 20px; /* Добавляем отступ снизу для всех .words-container */
+  padding-bottom: 10px; /* Добавляем отступ снизу для создания пространства под линию */
+  margin-top: 10px;
+  position: relative; /* Для позиционирования псевдо-элемента */
 }
 
-.term {
-  min-width: 100px; /* Минимальная ширина для термина */
-  margin-right: 40px; /* Отступ между термином и транскрипцией */
-  text-align: left;
+.words-container:not(:last-child):after {
+  content: ""; /* Необходимо для создания псевдо-элемента */
+  display: block;
+  height: 1px; /* Высота линии */
+  background-color: #ccc; /* Цвет линии */
+  width: 100%; /* Ширина линии равна ширине контейнера */
+  position: absolute;
+  bottom: 0; /* Расположение у самого нижнего края контейнера */
+  left: 0;
 }
 
-.transcription {
-  min-width: 80px; /* Минимальная ширина для транскрипции */
-  margin-right: 40px; /* Отступ между транскрипцией и переводом */
+/* Удаление нижнего отступа для последнего .words-container */
+.words-container:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
+.term,
+.transcription,
 .translation {
-  flex-grow: 1;
-  text-align: left;
+  width: 160px; /* Устанавливаем фиксированную ширину */
+  overflow-wrap: break-word;
+  word-break: break-word; /* Дополнительное свойство для переноса длинных слов */
+  margin-right: 20px; /* Отступ справа */
+  flex: none;
+  flex-shrink: 0;
+  word-wrap: break-word;
 }
 
-.word-container:last-child {
-  border-bottom: none;
+.words-container > div:last-child {
+  margin-right: 0;
 }
 
+.words-container > div:last-child {
+  margin-right: 0; /* Убираем отступ справа у последнего элемента в контейнере */
+}
 #deckNameTitle {
   position: relative;
   padding-bottom: 10px;
@@ -384,12 +403,6 @@ input[readonly] {
   right: 0;
   bottom: 0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.term-container:not(:last-child) {
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
 }
 
 /* .edit-button { */
