@@ -404,3 +404,25 @@ app.post("/delete-word", async (req, res) => {
     res.status(500).json({ success: false, message: "Error deleting word." });
   }
 });
+
+app.post("/delete-deck", async (req, res) => {
+  const { deckId } = req.body; // Получаем ID колоды из тела запроса
+
+  try {
+    // Удаляем все слова связанные с этой колодой
+    await Word.deleteMany({ _id: { $in: deckId } });
+
+    // Удаляем саму колоду
+    await Deck.findByIdAndRemove(deckId);
+
+    res.json({
+      success: true,
+      message: "Колода и все связанные слова успешно удалены.",
+    });
+  } catch (error) {
+    console.error("Ошибка при удалении колоды: ", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Ошибка при удалении колоды." });
+  }
+});

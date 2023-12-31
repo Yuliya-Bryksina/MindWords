@@ -511,19 +511,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
       });
     });
   });
-  const deleteDeckButton = document.querySelector(".delete-deck-button");
-  if (deleteDeckButton) {
-    // Добавляем обработчик событий для кнопки
-    deleteDeckButton.addEventListener("click", (event) => {
-      // Предотвращаем всплытие события клика, чтобы не активировать другие клики
-      event.stopPropagation();
-      // Подтверждение действия пользователем
-      if (confirm("Вы уверены, что хотите удалить эту колоду?")) {
-        // TODO: Реализуйте логику удаления колоды здесь
-        console.log("Колода будет удалена");
-      }
-    });
-  }
+  // Получаем элементы
+  const deleteDeckButton = document.querySelector("#deleteDeckButton");
   const deleteConfirmationModal = document.getElementById(
     "deleteConfirmationModal"
   );
@@ -531,23 +520,39 @@ document.addEventListener("DOMContentLoaded", (event) => {
   const cancelDeleteButton = document.getElementById("cancelDelete");
   const confirmDeleteButton = document.getElementById("confirmDelete");
 
-  // Настройка и показ модального окна при клике на кнопку удаления
-  deleteDeckButton.addEventListener("click", (event) => {
-    deckNameToDelete.textContent = deckNameTitle.textContent; // Используем textContent здесь
-    deleteConfirmationModal.style.display = "flex";
-  });
+  // Убедитесь, что все элементы существуют, прежде чем добавлять обработчики событий
+  if (
+    deleteDeckButton &&
+    deleteConfirmationModal &&
+    deckNameToDelete &&
+    cancelDeleteButton &&
+    confirmDeleteButton &&
+    deckNameTitle
+  ) {
+    deleteDeckButton.addEventListener("click", (event) => {
+      event.stopPropagation(); // Предотвращение всплытия события
+      if (confirm("Вы уверены, что хотите удалить эту колоду?")) {
+        console.log("Колода будет удалена");
+      }
+    });
 
-  // Закрытие модального окна без удаления
-  cancelDeleteButton.addEventListener("click", (event) => {
-    deleteConfirmationModal.style.display = "none";
-  });
+    // Настройка и показ модального окна при клике на кнопку удаления
+    deleteDeckButton.addEventListener("click", (event) => {
+      deckNameToDelete.textContent = deckNameTitle.textContent;
+      deleteConfirmationModal.style.display = "flex";
+    });
 
-  // Подтверждение удаления и закрытие модального окна
-  confirmDeleteButton.addEventListener("click", (event) => {
-    // TODO: Реализуйте логику удаления колоды здесь
-    console.log(`Колода "${deckNameTitle.textContent}" будет удалена`); // И снова используем textContent
-    deleteConfirmationModal.style.display = "none";
-  });
+    // Закрытие модального окна без удаления
+    cancelDeleteButton.addEventListener("click", (event) => {
+      deleteConfirmationModal.style.display = "none";
+    });
+
+    // Подтверждение удаления и закрытие модального окна
+    confirmDeleteButton.addEventListener("click", (event) => {
+      console.log(`Колода "${deckNameTitle.textContent}" будет удалена`);
+      deleteConfirmationModal.style.display = "none";
+    });
+  }
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -1071,7 +1076,8 @@ function loadDeckWords() {
           translationElement.textContent = word.translation;
           const deleteBtn = document.createElement("button");
           deleteBtn.classList.add("delete-btn");
-          deleteBtn.textContent = "X";
+          deleteBtn.innerHTML = '<i class="fa-solid fa-minus"></i>'; // Иконка крестика FontAwesome
+
           deleteBtn.style.display = "none"; // изначально скрыта
           deleteBtn.onclick = function () {
             // Измените этот вызов, чтобы передать идентификатор слова

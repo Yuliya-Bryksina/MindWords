@@ -177,8 +177,7 @@ input[readonly] {
 
 .rounded-section {
   border-radius: 15px;
-  position: relative; /* Или любое другое значение, которое вам нравится */
-  /* Другие стили, такие как padding, background-color и т.д., если нужно */
+  position: relative;
 }
 
 /* Стили для блока с переводом слова */
@@ -219,6 +218,18 @@ input[readonly] {
   display: flex;
   justify-content: space-between; /* Размещает дочерние элементы на противоположных концах контейнера */
   align-items: center; /* Центрирование дочерних элементов по вертикали */
+  padding-bottom: 1px; /* Чтобы линия не касалась кнопок */
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px; /* Расстояние между кнопками */
+}
+.header-divider {
+  height: 1px; /* Высота линии */
+  background-color: #ccc; /* Цвет линии */
+  margin-top: 5px; /* Отступ сверху */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 /* Стили для кнопки создания колоды */
 .create-deck-button {
@@ -346,10 +357,9 @@ input[readonly] {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 20px; /* Добавляем отступ снизу для всех .words-container */
-  padding-bottom: 10px;
+  padding-bottom: 15px;
   padding-right: 40px; /* Добавляем отступ снизу для создания пространства под линию */
-  margin-top: 10px;
+  padding-top: 15px;
   position: relative; /* Для позиционирования псевдо-элемента */
 }
 
@@ -388,15 +398,50 @@ input[readonly] {
 }
 
 .delete-btn {
-  position: absolute;
-  top: 50%; /* центрировать вертикально */
-  right: 10px; /* отступ справа от края контейнера */
-  transform: translateY(-50%); /* сместить вверх на половину своей высоты */
-  width: 30px; /* фиксированная ширина */
-  height: 30px; /* фиксированная высота */
-  visibility: hidden; /* изначально скрыть кнопку */
-  cursor: pointer;
-  /* другие стили кнопки, такие как фон, рамки и т.д. */
+  font-family: "Font Awesome 5 Free"; /* Шрифт FontAwesome */
+  font-weight: 900; /* Для корректного отображения иконок */
+  text-align: center; /* Центрирование иконки внутри кнопки */
+  font-size: 1.5rem; /* Размер иконки */
+  width: 30px; /* Ширина кнопки */
+  height: 30px; /* Высота кнопки */
+  line-height: 30px; /* Высота строки для вертикального центрирования */
+  border: none; /* Убираем границу */
+  background: none; /* Прозрачный фон */
+  box-shadow: none; /* Убираем тень */
+  cursor: pointer; /* Курсор в виде указателя */
+  position: absolute; /* Абсолютное позиционирование */
+  top: 50%; /* Вертикальное центрирование */
+  right: 10px; /* Отступ справа */
+  transform: translateY(
+    -50%
+  ); /* Смещение для точного вертикального центрирования */
+  visibility: hidden; /* Изначально скрыть кнопку */
+  display: flex; /* Используем flexbox для выравнивания иконки */
+  justify-content: center; /* Горизонтальное центрирование иконки */
+  align-items: center; /* Вертикальное центрирование иконки */
+  padding: 0; /* Убираем внутренние отступы */
+  outline: none; /* Убираем контур */
+  box-shadow: none; /* Убираем тень */
+}
+
+.delete-btn i {
+  font-style: normal; /* Убираем курсив, если он был применен */
+  color: #333; /* Исходный цвет иконки */
+}
+/* Изменение стиля кнопки при наведении */
+.delete-btn:focus,
+.delete-btn:hover,
+.delete-btn:active {
+  /* Добавьте :active для учета стилей во время клика */
+  background-color: transparent; /* Подтверждаем прозрачный фон */
+  box-shadow: none; /* Убираем тень */
+  outline: none; /* Убираем контур */
+}
+
+.delete-btn:hover i,
+.delete-btn:focus i,
+.delete-btn:active i {
+  color: #f44336 !important; /* Цвет иконки при наведении с принудительным применением */
 }
 
 .words-container:hover .delete-btn {
@@ -407,22 +452,6 @@ input[readonly] {
   position: relative;
   padding-bottom: 10px;
   margin-bottom: 20px;
-}
-
-#deckNameTitle:after {
-  content: "";
-  display: block;
-  height: 1px;
-  background-color: #dfdcdc;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.hidden {
-  display: none;
 }
 
 [contenteditable="true"] {
@@ -456,8 +485,7 @@ input[readonly] {
 }
 
 .button-icon {
-  background: #f5f5f5; /* Цвет фона кнопки */
-  border: 1px solid #ddd; /* Цвет границы кнопки */
+  background: #fcf8f8; /* Цвет фона кнопки */
   border-radius: 4px; /* Слегка закругленные углы */
   width: 40px; /* Ширина кнопки */
   height: 40px; /* Высота кнопки */
@@ -465,7 +493,16 @@ input[readonly] {
   justify-content: center; /* Центрирование иконки по горизонтали */
   align-items: center; /* Центрирование иконки по вертикали */
   cursor: pointer; /* Курсор в виде указателя */
-  font-size: 20px; /* Размер иконок */
+  font-size: 20px;
+  box-shadow: none; /* Размер иконок */
+  border: 1px solid transparent; /* Сделаем границу прозрачной */
+  transition: border 0.3s ease-in-out, background-color 0.3s ease-in-out,
+    box-shadow 0.3s ease-in-out; /* Добавляем плавность для теней */
+}
+.button-icon:hover {
+  border: 1px solid #ccc;
+  background-color: #fcf8f8;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень при наведении для эффекта объема */
 }
 .edit-button {
   color: #4a90e2; /* Цвет иконки карандаша */
@@ -473,4 +510,44 @@ input[readonly] {
 
 .delete-button {
   color: #f44336; /* Цвет иконки корзины */
+}
+
+.container-for-button {
+  text-align: right; /* Выравнивание кнопки вправо */
+  padding: 10px 0; /* Отступ сверху и снизу */
+  padding-top: 20px;
+  display: block;
+  /* Это должно быть уже по умолчанию, но указываем явно */
+}
+
+.save-submit-button {
+  background-color: #4caf50; /* Зеленый фон */
+  color: white; /* Белый текст */
+  padding: 10px 20px; /* Внутренние отступы */
+  border: none; /* Убираем границу */
+  border-radius: 25px; /* Сильно скругленные края */
+  cursor: pointer; /* Курсор в виде указателя */
+  font-size: 1rem; /* Размер шрифта */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Легкая тень для эффекта подъема */
+  transition: background-color 0.3s ease-in-out; /* Плавность перехода для фона */
+  margin-left: auto; /* Смещение кнопки к правому краю контейнера */
+  margin-right: 0px; /* Установите необходимый отступ справа, если это нужно */
+  display: inline-block; /* Или inline-block, если вы хотите, чтобы кнопка не растягивалась на всю ширину */
+  width: auto; /* Или max-width, если вы хотите ограничить ширину кнопки */
+}
+.save-submit-button:hover {
+  background-color: #43a047; /* Чуть темнее оттенок зеленого при наведении */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Более выраженная тень при наведении */
+}
+.save-submit-button:not(.hidden) {
+  display: block; /* Заставляет кнопку занимать только необходимую ширину */
+}
+
+.content-container {
+  display: block; /* или inline-block, если необходимо */
+  width: fit-content;
+  margin: auto; /* Центрирование контейнера на странице */
+}
+.hidden {
+  display: none;
 }

@@ -12,23 +12,36 @@
     <title>Колода слов</title>
   </head>
   <body>
+    <!-- <div class="content-container"> -->
     <section class="rounded-section">
       <!-- Используйте тот же класс, что и в main.html -->
       <div class="header-with-button">
-        <h1 id="deckNameTitle">Название колоды</h1>
-        <button id="editButton" class="button-icon edit-button">
-          <i class="fas fa-pencil-alt"></i>
-          <!-- Иконка карандаша -->
-        </button>
-        <button id="deleteDeckButton" class="button-icon delete-button">
-          <i class="fas fa-trash"></i>
-          <!-- Иконка корзины -->
-        </button>
+        <div class="header-title">
+          <h1 id="deckNameTitle">Work</h1>
+        </div>
+        <div class="header-buttons">
+          <button id="editButton" class="button-icon edit-button">
+            <i class="fas fa-pencil-alt"></i>
+            <!-- Иконка карандаша -->
+          </button>
+          <button id="deleteDeckButton" class="button-icon delete-button">
+            <i class="fas fa-trash"></i>
+            <!-- Иконка корзины -->
+          </button>
+        </div>
       </div>
+      <div class="header-divider"></div>
+      <!-- Линия под заголовком и кнопками -->
+
       <div id="deckWordsList">
         <div class="term"></div>
         <div class="transcription"></div>
         <div class="translation"></div>
+      </div>
+      <div class="container-for-button">
+        <button id="saveSubmitButton" class="save-submit-button hidden">
+          Сохранить и отправить
+        </button>
       </div>
     </section>
     <!-- Модальное окно для подтверждения удаления -->
@@ -49,9 +62,6 @@
       </div>
     </div>
 
-    <button id="saveSubmitButton" class="save-submit-button hidden">
-      Сохранить и отправить
-    </button>
     <script src="/js/script.js"></script>
   </body>
 </html>
