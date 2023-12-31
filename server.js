@@ -406,14 +406,22 @@ app.post("/delete-word", async (req, res) => {
 });
 
 app.post("/delete-deck", async (req, res) => {
-  const { deckId } = req.body; // Получаем ID колоды из тела запроса
+  const { deckId } = req.body;
 
   try {
-    // Удаляем все слова связанные с этой колодой
-    await Word.deleteMany({ _id: { $in: deckId } });
+    // Находим колоду, чтобы узнать связанные слова
+    const deck = await Deck.findById(deckId);
+    if (!deck) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Колода не найдена." });
+    }
+
+    // Удаляем все слова, связанные с этой колодой
+    await Word.deleteMany({ _id: { $in: deck.words } });
 
     // Удаляем саму колоду
-    await Deck.findByIdAndRemove(deckId);
+    await Deck.findByIdAndDelete(deckId);
 
     res.json({
       success: true,

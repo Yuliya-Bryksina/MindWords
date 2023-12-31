@@ -370,6 +370,45 @@ function onWordInputChange(container) {
   console.log("Изменение слова с ID:", id);
   console.log(wordChanges[id]);
 }
+const confirmDeleteButton = document.getElementById("confirmDelete");
+
+if (confirmDeleteButton) {
+  confirmDeleteButton.addEventListener("click", async () => {
+    // Получаем ID колоды из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const deckId = urlParams.get("deckId");
+
+    if (deckId) {
+      try {
+        // Отправляем запрос на сервер для удаления колоды с помощью метода POST
+        const response = await fetch("/delete-deck", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ deckId: deckId }),
+        });
+
+        // Обрабатываем ответ сервера
+        const result = await response.json();
+        if (result.success) {
+          // Удаление прошло успешно
+          alert("Колода успешно удалена.");
+          // Переадресация на главную страницу или обновление интерфейса
+          window.location.href = "/main.html";
+        } else {
+          // Сервер вернул ошибку
+          alert("Ошибка при удалении колоды: " + result.message);
+        }
+      } catch (error) {
+        // Обработка ошибок сети/запроса
+        alert("Ошибка сети: " + error.message);
+      }
+    } else {
+      alert("ID колоды не найден.");
+    }
+  });
+}
 
 document.addEventListener("DOMContentLoaded", (event) => {
   const wordInput = document.getElementById("wordInput");
@@ -531,9 +570,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
   ) {
     deleteDeckButton.addEventListener("click", (event) => {
       event.stopPropagation(); // Предотвращение всплытия события
-      if (confirm("Вы уверены, что хотите удалить эту колоду?")) {
-        console.log("Колода будет удалена");
-      }
+      // if (confirm("Вы уверены, что хотите удалить эту колоду?")) {
+      //   console.log("Колода будет удалена");
+      // }
     });
 
     // Настройка и показ модального окна при клике на кнопку удаления
