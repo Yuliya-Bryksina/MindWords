@@ -1,5 +1,6 @@
 body {
   font-family: "Inter", sans-serif;
+  color: #444;
 }
 
 /* Уменьшение размера шрифта для элементов в блоке dailyTasks */
@@ -250,6 +251,11 @@ input[readonly] {
   margin-right: 20px;
   color: #444; /* Отступ справа от заголовка до кнопки */
 }
+
+h2 {
+  color: #444;
+}
+
 .add-word-section {
   position: relative; /* Добавьте относительное позиционирование к родительскому блоку */
 }
@@ -550,4 +556,58 @@ input[readonly] {
 }
 .hidden {
   display: none;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  box-sizing: border-box; /* Убедитесь, что границы и padding включены в общий размер */
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none; /* Убираем стандартный outline */
+  box-shadow: none; /* Нет тени в обычном состоянии */
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+  border: 1px solid #5c7aea; /* Сохраняйте ту же толщину границы при фокусе */
+  padding: 10px; /* Не изменяйте padding */
+  box-shadow: 0 0 0 1px #5c7aea; /* Добавляем тень для обозначения фокуса */
+  /* Остальные стили */
+}
+
+.container {
+  width: 90%;
+  max-width: 400px;
+  margin: 0 auto;
+  margin-top: 100px;
+  padding: 20px;
+  box-shadow: 0 5px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 8px;
+}
+
+.login-link,
+.register-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.login-link a,
+.register-link a {
+  color: #5c7aea; /* Используйте цвет вашей темы */
+  text-decoration: none; /* Убрать подчеркивание */
+}
+
+.login-link a:hover,
+.register-link a:hover {
+  text-decoration: underline; /* Добавить подчеркивание при наведении */
 }
