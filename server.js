@@ -19,7 +19,14 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.DB_URI }),
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Включать только при использовании HTTPS
+    },
+    store: MongoStore.create({
+      mongoUrl: process.env.DB_URI,
+      ttl: 14 * 24 * 60 * 60, // Срок жизни сессии в секундах (14 дней)
+    }),
   })
 );
 
@@ -569,7 +576,7 @@ app.get("/some-protected-route", isAuthenticated, (req, res) => {
 // Маршрут входа
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body; // Добавляем `rememberMe` в деструктуризацию
     const user = await User.findOne({ email });
     if (!user || !(await user.isValidPassword(password))) {
       return res.status(401).json({
@@ -577,8 +584,16 @@ app.post("/login", async (req, res) => {
         message: "Invalid credentials.",
       });
     }
-
+    // Установка идентификатора пользователя для сессии
     req.session.userId = user._id;
+
+    // Установка параметра 'maxAge' куки сессии в зависимости от состояния чекбокса "Запомнить меня"
+    if (rememberMe) {
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 дней
+    } else {
+      req.session.cookie.expires = false; // Куки сессии будет удалена при закрытии браузера
+    }
+    console.log("Сессия установлена на:", req.session.cookie.maxAge);
     console.log("Сессия установлена:", req.session);
     res.json({
       success: true,

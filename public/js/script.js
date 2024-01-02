@@ -611,16 +611,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     });
   }
 
-  // Обработчик для формы входа
-  const loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const email = this.email.value;
-      const password = this.password.value;
-      loginUser(email, password);
-    });
-  }
   const logoutButton = document.getElementById("logoutButton");
   if (logoutButton) {
     logoutButton.addEventListener("click", function () {
@@ -657,6 +647,18 @@ document.addEventListener("DOMContentLoaded", (event) => {
       getDecks();
       loadDecks();
     }
+  }
+  const loginForm = document.getElementById("loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const email = this.email.value;
+      const password = this.password.value;
+      const rememberMe = this.rememberMe.checked;
+
+      loginUser(email, password, rememberMe);
+    });
   }
 });
 
@@ -1298,14 +1300,14 @@ function registerUser(email, password) {
     });
 }
 
-function loginUser(email, password) {
+function loginUser(email, password, rememberMe) {
   // Отправляем запрос на маршрут входа
   fetch("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, rememberMe }),
   })
     .then((response) => {
       if (!response.ok) {
