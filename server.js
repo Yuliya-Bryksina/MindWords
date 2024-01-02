@@ -1,19 +1,32 @@
+require("dotenv").config();
+
 const Word = require("./models/word");
 const Deck = require("./models/path-to-deck-model");
+const User = require("./models/user"); // Путь к вашей модели пользователя
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const router = express.Router();
 
 const app = express();
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.DB_URI }),
+  })
+);
+
 app.use(express.static("public"));
 
 mongoose
-  .connect(
-    "mongodb+srv://bryksinaiuliia:FHikiKxDbnJX6QSJ@cluster1.fc0ysks.mongodb.net/?retryWrites=true&w=majority"
-  )
+  .connect(process.env.DB_URI)
   .then(() => console.log("Connected to MongoDB..."))
   .catch((err) => console.error("Could not connect to MongoDB...", err));
 
@@ -24,14 +37,17 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.post("/words", async (req, res) => {
+app.post("/words", isAuthenticated, async (req, res) => {
   try {
     // Добавление скобок к транскрипции, полученной из запроса
     if (req.body.transcription) {
       req.body.transcription = `[${req.body.transcription}]`;
     }
-    const newWord = new Word(req.body);
+
+    // Создаем новое слово с userId из сессии
+    const newWord = new Word({ ...req.body, userId: req.session.userId });
     await newWord.save();
+
     // Проверяем, передан ли ID колоды
     if (req.body.deckId) {
       await Deck.findByIdAndUpdate(req.body.deckId, {
@@ -45,12 +61,17 @@ app.post("/words", async (req, res) => {
   }
 });
 
-app.get("/daily-tasks", async (req, res) => {
+app.get("/daily-tasks", isAuthenticated, async (req, res) => {
   try {
-    const newWordsCount = await Word.countDocuments({ studied: false });
+    const userId = req.session.userId;
+    const newWordsCount = await Word.countDocuments({
+      studied: false,
+      userId: userId,
+    });
     const wordsToReviewCount = await Word.countDocuments({
-      studied: true, // Добавьте это условие
+      studied: true,
       nextReviewDate: { $lte: Date.now() },
+      userId: userId,
     });
     res.json({ newWords: newWordsCount, wordsToReview: wordsToReviewCount });
   } catch (error) {
@@ -58,10 +79,12 @@ app.get("/daily-tasks", async (req, res) => {
   }
 });
 
-app.get("/api/words", async (req, res) => {
+app.get("/api/words", isAuthenticated, async (req, res) => {
   try {
+    const userId = req.session.userId;
     const wordsToReview = await Word.find({
       nextReviewDate: { $lte: Date.now() },
+      userId: userId,
     });
     res.status(200).send(wordsToReview);
   } catch (error) {
@@ -69,10 +92,10 @@ app.get("/api/words", async (req, res) => {
   }
 });
 
-app.get("/new-words-count", async (req, res) => {
+app.get("/new-words-count", isAuthenticated, async (req, res) => {
   try {
-    // Считаем количество слов, которые еще не изучены
-    const count = await Word.countDocuments({ studied: false });
+    const userId = req.session.userId;
+    const count = await Word.countDocuments({ studied: false, userId: userId });
     res.json({ newWordsCount: count });
   } catch (error) {
     console.error("Ошибка при подсчете новых слов: ", error);
@@ -80,20 +103,23 @@ app.get("/new-words-count", async (req, res) => {
   }
 });
 
-app.get("/api/new-words", async (req, res) => {
+app.get("/api/new-words", isAuthenticated, async (req, res) => {
   try {
-    const newWords = await Word.find({ studied: false });
+    const userId = req.session.userId;
+    const newWords = await Word.find({ studied: false, userId: userId });
     res.json(newWords);
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
 
-app.get("/api/words-to-review", async (req, res) => {
+app.get("/api/words-to-review", isAuthenticated, async (req, res) => {
   try {
+    const userId = req.session.userId;
     const wordsToReview = await Word.find({
       studied: true,
       nextReviewDate: { $lte: new Date() },
+      userId: userId,
     });
     res.json(wordsToReview);
   } catch (error) {
@@ -104,47 +130,54 @@ app.get("/api/words-to-review", async (req, res) => {
 // Обработчик маршрута, который будет отвечать на запрос поиска значения слова в БД в модальном окне
 
 // Corrected /get-word-definition handler
-app.get("/get-word-definition", async (req, res) => {
+app.get("/get-word-definition", isAuthenticated, async (req, res) => {
   const { word } = req.query;
-  console.log(`Запрошенное слово: ${word}`); // Логируем полученное слово
-  try {
-    const wordDefinition = await Word.findOne({ translation: word });
-    console.log(`Найденное определение: ${wordDefinition}`);
+  const userId = req.session.userId;
 
+  try {
+    const wordDefinition = await Word.findOne({
+      translation: word,
+      userId: userId,
+    });
     if (!wordDefinition) {
-      return res.status(404).send("Word not found");
+      return res
+        .status(404)
+        .send("Word not found or does not belong to the user");
     }
 
     res.send({
-      term: wordDefinition.term, // Английское слово
-      transcription: wordDefinition.transcription, // Транскрипция
-      translation: wordDefinition.translation, // Перевод, если вам нужен
+      term: wordDefinition.term,
+      transcription: wordDefinition.transcription,
+      translation: wordDefinition.translation,
     });
   } catch (error) {
-    console.error(`Ошибка при поиске слова: ${error}`); // Логируем ошибку
+    console.error(`Ошибка при поиске слова: ${error}`);
     res.status(500).send("Internal Server Error");
   }
 });
 
-app.post("/update-word-status", async (req, res) => {
+app.post("/update-word-status", isAuthenticated, async (req, res) => {
+  const { wordId, knowsWord } = req.body;
+  const userId = req.session.userId;
+
   try {
-    const { wordId, knowsWord } = req.body;
-    await updateWord(wordId, knowsWord); // Используем функцию updateWord для обновления статуса слова
+    await updateWord(wordId, knowsWord, userId); // Обновляем с учетом userId
     res.send({ message: "Word status updated successfully" });
   } catch (error) {
     res.status(500).send(error);
   }
 });
 
-async function updateWord(wordId, knowsWord) {
+async function updateWord(wordId, knowsWord, userId) {
   try {
-    const word = await Word.findById(wordId);
-    console.log("Word found:", word); // Логирование после успешного поиска слова
+    // Поиск слова с учетом userId для обеспечения безопасности
+    const word = await Word.findOne({ _id: wordId, userId: userId });
 
     if (!word) {
-      throw new Error("Word not found");
+      throw new Error("Word not found or does not belong to the user");
     }
 
+    // Теперь логика обновления слова
     if (knowsWord) {
       // Логика для ситуации, когда пользователь знает слово
       word.repetitionLevel += 1;
@@ -167,10 +200,10 @@ async function updateWord(wordId, knowsWord) {
     }
 
     await word.save();
-    console.log("Word saved successfully."); // Логирование после успешного сохранения слова
+    console.log("Word saved successfully.");
   } catch (error) {
-    console.error("Error in updateWord:", error); // Логирование ошибки
-    throw error; // Это гарантирует, что ошибка будет передана дальше
+    console.error("Error in updateWord:", error);
+    throw error;
   }
 }
 
@@ -204,10 +237,12 @@ app.listen(PORT, () => {
 //---Создание функционала колод---//
 
 // Создание новой колоды
-app.post("/decks", async (req, res) => {
+app.post("/decks", isAuthenticated, async (req, res) => {
   try {
+    // Создаем новую колоду с userId из сессии
     const deck = new Deck({
       name: req.body.name,
+      userId: req.session.userId, // Привязываем колоду к текущему пользователю
       updatedAt: Date.now(), // Явно устанавливаем текущую дату обновления
     });
     await deck.save();
@@ -218,9 +253,22 @@ app.post("/decks", async (req, res) => {
 });
 
 //Маршрут для получения колод с группировкой по месяцам
-app.get("/decks/grouped", async (req, res) => {
+app.get("/decks/grouped", isAuthenticated, async (req, res) => {
   try {
+    const userId = req.session.userId;
+
+    // Проверяем, есть ли колоды у пользователя
+    const decksCount = await Deck.countDocuments({
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+    if (decksCount === 0) {
+      // Если колод нет, отправляем пустой массив
+      return res.json([]);
+    }
+
+    // Если колоды есть, продолжаем запрос агрегации
     const decks = await Deck.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $project: {
           name: 1,
@@ -237,19 +285,30 @@ app.get("/decks/grouped", async (req, res) => {
       },
       { $sort: { _id: -1 } },
     ]);
-    res.send(decks);
+
+    res.json(decks);
   } catch (error) {
-    res.status(500).send(error);
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 // Маршрут для поиска колод по имени
-app.get("/decks/search", async (req, res) => {
+app.get("/decks/search", isAuthenticated, async (req, res) => {
   try {
+    const userId = req.session.userId;
     const searchQuery = req.query.q;
-    // Используем агрегацию, чтобы добавить количество терминов
+    console.log(`Search query received: ${searchQuery}`);
+
     const decks = await Deck.aggregate([
-      { $match: { name: new RegExp(searchQuery, "i") } }, // Находим колоды по запросу
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          name: new RegExp(searchQuery, "i"),
+        },
+      }, // Фильтруем колоды по userId и поисковому запросу
       {
         $project: {
           name: 1,
@@ -261,15 +320,16 @@ app.get("/decks/search", async (req, res) => {
     ]);
     res.send(decks);
   } catch (error) {
+    console.error("Error during deck search:", error);
     res.status(500).send(error);
   }
 });
 
 // Получение списка колод
-// В файле server.js, в маршруте, который загружает колоды
-app.get("/decks", async (req, res) => {
+app.get("/decks", isAuthenticated, async (req, res) => {
   try {
-    const decks = await Deck.find({}).populate("words");
+    const userId = req.session.userId;
+    const decks = await Deck.find({ userId: userId }).populate("words");
     const updatedDecks = decks.map((deck) => {
       return {
         ...deck._doc,
@@ -283,9 +343,15 @@ app.get("/decks", async (req, res) => {
 });
 
 // Добавление слова в колоду
-app.post("/decks/:deckId/words", async (req, res) => {
+app.post("/decks/:deckId/words", isAuthenticated, async (req, res) => {
   try {
-    const deck = await Deck.findById(req.params.deckId);
+    const userId = req.session.userId;
+    const deck = await Deck.findOne({ _id: req.params.deckId, userId: userId });
+
+    if (!deck) {
+      return res.status(404).send("Колода не найдена или вам не принадлежит.");
+    }
+
     deck.words.push(req.body.wordId);
     await deck.save();
     res.status(200).send(deck);
@@ -294,26 +360,36 @@ app.post("/decks/:deckId/words", async (req, res) => {
   }
 });
 
-app.get("/decks/:deckId/words", async (req, res) => {
+app.get("/decks/:deckId/words", isAuthenticated, async (req, res) => {
   try {
+    const userId = req.session.userId;
     const deckId = req.params.deckId;
-    const deck = await Deck.findById(deckId).populate("words");
+    const deck = await Deck.findOne({ _id: deckId, userId: userId }).populate(
+      "words"
+    );
+
     if (!deck) {
-      return res.status(404).send("Колода не найдена.");
+      return res.status(404).send("Колода не найдена или вам не принадлежит.");
     }
+
     res.status(200).json({ deckName: deck.name, words: deck.words });
   } catch (error) {
     res.status(500).send(error);
   }
 });
 
-app.post("/update-deck/:deckId", async (req, res) => {
+app.post("/update-deck/:deckId", isAuthenticated, async (req, res) => {
   const { deckName, words: updatedWords } = req.body;
   const deckId = req.params.deckId;
+  const userId = req.session.userId;
 
   try {
-    // Получение текущего состояния колоды
-    const deck = await Deck.findById(deckId);
+    // Получение текущего состояния колоды и проверка, что она принадлежит пользователю
+    const deck = await Deck.findOne({ _id: deckId, userId: userId });
+
+    if (!deck) {
+      return res.status(404).send("Колода не найдена или вам не принадлежит.");
+    }
 
     // Создание массива идентификаторов слов для обновления
     let wordsToUpdate = deck.words.map((word) => word.toString());
@@ -342,29 +418,31 @@ app.post("/update-deck/:deckId", async (req, res) => {
   }
 });
 
-async function getLastUpdatedDateForDecks() {
-  const decks = await Deck.find(); // Получаем все колоды
+// Похоже, что это не используется
+// async function getLastUpdatedDateForDecks() {
+//   const decks = await Deck.find(); // Получаем все колоды
 
-  const lastUpdatedDates = await Promise.all(
-    decks.map(async (deck) => {
-      // Находим последнее обновленное слово в колоде
-      const lastWordUpdate = await Word.findOne({ _id: { $in: deck.words } })
-        .sort({ updatedAt: -1 }) // Сортируем слова по дате обновления
-        .select("updatedAt -_id"); // Выбираем только нужное поле
+//   const lastUpdatedDates = await Promise.all(
+//     decks.map(async (deck) => {
+//       // Находим последнее обновленное слово в колоде
+//       const lastWordUpdate = await Word.findOne({ _id: { $in: deck.words } })
+//         .sort({ updatedAt: -1 }) // Сортируем слова по дате обновления
+//         .select("updatedAt -_id"); // Выбираем только нужное поле
 
-      return {
-        deckId: deck._id,
-        lastUpdate: lastWordUpdate ? lastWordUpdate.updatedAt : deck.createdAt,
-      };
-    })
-  );
+//       return {
+//         deckId: deck._id,
+//         lastUpdate: lastWordUpdate ? lastWordUpdate.updatedAt : deck.createdAt,
+//       };
+//     })
+//   );
 
-  return lastUpdatedDates;
-}
+//   return lastUpdatedDates;
+// }
 
-app.get("/decks/last-updated", async (req, res) => {
+app.get("/decks/last-updated", isAuthenticated, async (req, res) => {
   try {
-    const decks = await Deck.find().populate({
+    const userId = req.session.userId;
+    const decks = await Deck.find({ userId: userId }).populate({
       path: "words",
       options: { sort: { updatedAt: -1 } }, // Сортировка слов по дате обновления
     });
@@ -383,44 +461,53 @@ app.get("/decks/last-updated", async (req, res) => {
   }
 });
 
-app.post("/delete-word", async (req, res) => {
-  console.log("Запрос на удаление слова получен:", req.body); // Логирование тела запроса
+app.post("/delete-word", isAuthenticated, async (req, res) => {
   const { wordId } = req.body;
+  const userId = req.session.userId;
+
   try {
-    // Удаление слова из коллекции Word
-    const wordDeleteResult = await Word.findByIdAndDelete(wordId);
-    console.log("Результат удаления слова:", wordDeleteResult);
+    // Находим и проверяем слово перед его удалением
+    const word = await Word.findOne({ _id: wordId, userId: userId });
+    if (!word) {
+      return res.status(404).json({
+        success: false,
+        message: "Слово не найдено или вам не принадлежит.",
+      });
+    }
 
-    // Удаление слова из коллекции Deck
-    const deckUpdateResult = await Deck.updateMany(
-      {},
-      { $pull: { words: wordId } }
-    );
-    console.log("Результат обновления колод:", deckUpdateResult);
+    // Удаление слова
+    await Word.findByIdAndDelete(wordId);
 
-    res.json({ success: true, message: "Word deleted successfully." });
+    // Обновление колод, удаляя из них это слово
+    await Deck.updateMany({ userId: userId }, { $pull: { words: wordId } });
+
+    res.json({ success: true, message: "Слово успешно удалено." });
   } catch (error) {
     console.error("Ошибка при удалении слова:", error);
-    res.status(500).json({ success: false, message: "Error deleting word." });
+    res
+      .status(500)
+      .json({ success: false, message: "Ошибка при удалении слова." });
   }
 });
 
-app.post("/delete-deck", async (req, res) => {
+app.post("/delete-deck", isAuthenticated, async (req, res) => {
   const { deckId } = req.body;
+  const userId = req.session.userId;
 
   try {
-    // Находим колоду, чтобы узнать связанные слова
-    const deck = await Deck.findById(deckId);
+    // Находим и проверяем колоду перед её удалением
+    const deck = await Deck.findOne({ _id: deckId, userId: userId });
     if (!deck) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Колода не найдена." });
+      return res.status(404).json({
+        success: false,
+        message: "Колода не найдена или вам не принадлежит.",
+      });
     }
 
-    // Удаляем все слова, связанные с этой колодой
+    // Удаление всех слов, связанных с колодой
     await Word.deleteMany({ _id: { $in: deck.words } });
 
-    // Удаляем саму колоду
+    // Удаление самой колоды
     await Deck.findByIdAndDelete(deckId);
 
     res.json({
@@ -428,9 +515,91 @@ app.post("/delete-deck", async (req, res) => {
       message: "Колода и все связанные слова успешно удалены.",
     });
   } catch (error) {
-    console.error("Ошибка при удалении колоды: ", error);
+    console.error("Ошибка при удалении колоды:", error);
     res
       .status(500)
       .json({ success: false, message: "Ошибка при удалении колоды." });
   }
+});
+
+// -- НАСТРОЙКА СЕССИЙ-- //
+
+// Маршрут регистрации
+app.post("/register", async (req, res) => {
+  try {
+    console.log(req.body); // Логирование данных запроса
+    const { email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send("User already exists.");
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = new User({ email, passwordHash });
+    await user.save();
+
+    req.session.userId = user._id; // Сохраняем ID пользователя в сессии
+    res.status(201).json({ success: true, message: "User created." });
+  } catch (error) {
+    console.error("Error creating user:", error); // Логирование ошибки
+    res.status(500).send("Error creating user.");
+  }
+});
+
+// Промежуточное ПО (middleware), которое будет проверять наличие userId в сессии
+function isAuthenticated(req, res, next) {
+  if (req.session.userId) {
+    console.log(
+      "Пользователь аутентифицирован, ID пользователя:",
+      req.session.userId
+    );
+    next();
+  } else {
+    console.log("Пользователь не аутентифицирован");
+    res.status(401).send("You are not authenticated.");
+  }
+}
+
+// Использование промежуточного ПО для защищенных маршрутов
+app.get("/some-protected-route", isAuthenticated, (req, res) => {
+  // Обработчик для защищенного маршрута
+  res.send("This is a protected route.");
+});
+
+// Маршрут входа
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user || !(await user.isValidPassword(password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials.",
+      });
+    }
+
+    req.session.userId = user._id;
+    console.log("Сессия установлена:", req.session);
+    res.json({
+      success: true,
+      message: "User logged in.",
+    });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error logging in user.",
+    });
+  }
+});
+
+// Маршрут для выхода, который будет уничтожать сессию:
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      res.status(500).send("Could not log out.");
+    } else {
+      res.send("User logged out.");
+    }
+  });
 });

@@ -9,13 +9,15 @@ if (window.location.pathname.includes("/deck.html")) {
 
 function showNotification(message) {
   const notification = document.getElementById("notification");
-  notification.textContent = message;
-  notification.style.display = "block";
+  if (notification) {
+    notification.textContent = message;
+    notification.style.display = "block";
 
-  // Скрыть уведомление через 3 секунды
-  setTimeout(() => {
-    notification.style.display = "none";
-  }, 3000);
+    // Скрыть уведомление через 3 секунды
+    setTimeout(() => {
+      notification.style.display = "none";
+    }, 3000);
+  }
 }
 
 function updateDailyTasks() {
@@ -303,9 +305,16 @@ function addEventListeners(button, wordId, knowsWord) {
   button.dataset.wordId = wordId; // Устанавливаем wordId как данные элемента для доступа в обработчике
 }
 
-// Вызывайте эти функции при загрузке страницы или в соответствующих событиях
-updateDailyTasks();
-updateNewWordsCount();
+function initializeUserSession() {
+  console.log("Инициализация сессии пользователя...");
+  localStorage.setItem("isAuthenticated", "true");
+  // Здесь можно добавить любую логику инициализации, которая должна происходить после входа пользователя
+  updateDailyTasks();
+  updateNewWordsCount();
+  getDecks();
+  loadDecks();
+  // ... любые другие функции инициализации
+}
 
 // Закрытие модального окна по клику на крестик
 const closeButtons = document.querySelectorAll(".close");
@@ -490,8 +499,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
       toggleEditMode();
       isEdited = true; // Отметить, что были внесены изменения
     });
-  } else {
-    console.log("editButton не найден, возможно мы не на странице deck.html");
   }
 
   // Событие нажатия на кнопку Сохранить и отправить
@@ -592,6 +599,65 @@ document.addEventListener("DOMContentLoaded", (event) => {
       deleteConfirmationModal.style.display = "none";
     });
   }
+
+  // Обработчик для формы регистрации
+  const registerForm = document.getElementById("registerForm");
+  if (registerForm) {
+    registerForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = this.email.value;
+      const password = this.password.value;
+      registerUser(email, password);
+    });
+  }
+
+  // Обработчик для формы входа
+  const loginForm = document.getElementById("loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = this.email.value;
+      const password = this.password.value;
+      loginUser(email, password);
+    });
+  }
+  const logoutButton = document.getElementById("logoutButton");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", function () {
+      fetch("/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Тело запроса не требуется, так как мы просто уничтожаем сессию на сервере
+      })
+        .then((response) => {
+          if (response.ok) {
+            // Успешный выход, перенаправляем на страницу входа
+            window.location.href = "/login.html";
+          } else {
+            throw new Error("Logout failed");
+          }
+        })
+        .catch((error) => {
+          console.error("There was an error logging out:", error);
+        });
+    });
+  }
+  if (localStorage.getItem("isAuthenticated") === "true") {
+    // Проверяем, находимся ли мы на главной странице
+    if (
+      window.location.pathname === "/" ||
+      window.location.pathname === "/main.html"
+    ) {
+      // Вызываем функции, которые должны работать на главной странице для авторизованного пользователя
+      getDecks();
+      updateNewWordsCount();
+      updateDailyTasks();
+      getDecks();
+      loadDecks();
+    }
+  }
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -625,9 +691,6 @@ if (deckSelectElement) {
     saveSelectedDeck();
   });
 }
-
-// Загрузка колод при загрузке страницы
-document.addEventListener("DOMContentLoaded", loadDecks);
 
 // Corrected showDefinition function
 function showDefinition() {
@@ -854,9 +917,14 @@ if (newDeckForm) {
 
 // Получение списка колод
 function getDecks() {
+  console.log("Начало функции getDecks");
   fetch("/decks")
-    .then((response) => response.json())
+    .then((response) => {
+      console.log("Получен ответ от сервера");
+      return response.json();
+    })
     .then((data) => {
+      console.log("Колоды получены:", data);
       const deckSelect = document.getElementById("deckSelect");
       if (deckSelect) {
         deckSelect.innerHTML = '<option value="">Выберите колоду</option>';
@@ -869,7 +937,7 @@ function getDecks() {
       }
     })
     .catch((error) => {
-      console.error("Error getting decks:", error);
+      console.error("Ошибка при получении колод:", error);
     });
 }
 
@@ -891,11 +959,9 @@ function addWordToDeck(wordId, deckId) {
     });
 }
 
-// Вызовите getDecks при инициализации приложения
-getDecks();
-
 // Функция для загрузки и отображения колод
 function loadDecks() {
+  console.log("Загрузка колод...");
   // Проверяем, существует ли элемент на странице
   const container = document.getElementById("decksContainer");
   if (container) {
@@ -907,6 +973,9 @@ function loadDecks() {
         fetch("/decks/grouped")
           .then((response) => response.json())
           .then((groups) => {
+            if (!Array.isArray(groups)) {
+              throw new Error("Received data is not an array");
+            }
             container.innerHTML = ""; // Очищаем контейнер перед отображением новых данных
 
             // Объединяем данные о колодах с информацией о последних обновлениях
@@ -965,9 +1034,6 @@ function loadDecks() {
       .catch((error) => {
         console.error("Error loading last updates:", error);
       });
-  } else {
-    // Если элемент не найден, здесь можно добавить код для обработки этого случая.
-    console.log("Контейнер 'decksContainer' не найден на этой странице.");
   }
 
   // Загрузка выбранной колоды из localStorage
@@ -1038,8 +1104,20 @@ function searchDecks() {
 
   // Если строка поиска не пуста, выполняем поиск
   fetch(`/decks/search?q=${encodeURIComponent(query)}`)
-    .then((response) => response.json())
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(
+          "Server responded with an error: " + response.statusText
+        );
+      }
+      return response.json();
+    })
     .then((decks) => {
+      // Проверяем, является ли ответ массивом
+      if (!Array.isArray(decks)) {
+        throw new Error("Error: Expected an array of decks, but got:", decks);
+      }
+
       const container = document.getElementById("decksContainer");
       container.innerHTML = ""; // Очищаем контейнер перед отображением результатов поиска
 
@@ -1060,11 +1138,11 @@ function searchDecks() {
         container.appendChild(deckDiv);
       });
     })
-    .catch((error) => console.error("Error searching decks:", error));
+    .catch((error) => {
+      console.error("Error searching decks:", error);
+      // Здесь вы можете обновить UI, чтобы сообщить пользователю об ошибке
+    });
 }
-
-// Загрузить колоды при загрузке страницы
-document.addEventListener("DOMContentLoaded", loadDecks);
 
 // Функция для сохранения выбранной колоды в localStorage
 function saveSelectedDeck() {
@@ -1190,4 +1268,71 @@ function onWordInputChange(container) {
 
   // Обновляем объект wordChanges для этого конкретного слова
   wordChanges[id] = { id, term, transcription, translation };
+}
+
+function registerUser(email, password) {
+  // Отправляем запрос на маршрут регистрации
+  fetch("/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        // Регистрация прошла успешно, инициализация сессии пользователя
+        initializeUserSession();
+
+        // Переадресация на страницу входа или другую страницу, где пользователь сможет войти
+        window.location.href = "/main.html";
+      } else {
+        // Обработка ошибок регистрации
+        showNotification(data.message);
+      }
+    })
+    .catch((error) => {
+      // Обработка сетевых ошибок
+      showNotification("Ошибка сети: " + error.message);
+    });
+}
+
+function loginUser(email, password) {
+  // Отправляем запрос на маршрут входа
+  fetch("/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error(
+            "Неверный логин или пароль. Пожалуйста, попробуйте снова."
+          );
+        } else {
+          throw new Error("Произошла ошибка на сервере. Попробуйте позже.");
+        }
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.success) {
+        // Вход прошел успешно, инициализация сессии пользователя
+        initializeUserSession();
+
+        // Переадресация на главную страницу
+        window.location.href = "/main.html";
+      } else {
+        // Обработка ошибок входа
+        showNotification(data.message);
+      }
+    })
+    .catch((error) => {
+      // Обработка сетевых ошибок
+      showNotification("Ошибка сети: " + error.message);
+    });
 }

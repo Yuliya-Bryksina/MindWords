@@ -8,10 +8,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600&display=swap"
-      rel="stylesheet"
-    />
     <title>Регистрация</title>
   </head>
   <body>
@@ -21,16 +17,24 @@
         <input
           type="email"
           id="email"
+          name="email"
           placeholder="Электронная почта"
           required
         />
-        <input type="password" id="password" placeholder="Пароль" required />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Пароль"
+          required
+        />
         <button type="submit">Зарегистрироваться</button>
       </form>
       <div class="login-link">
         Уже есть учетная запись? <a href="login.html">Войти</a>
       </div>
     </div>
+    <div id="notification" class="notification" style="display: none"></div>
     <script src="/js/script.js"></script>
   </body>
 </html>

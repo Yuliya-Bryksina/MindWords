@@ -10,6 +10,7 @@ const wordSchema = new mongoose.Schema(
     repetitionLevel: { type: Number, default: 0 }, // Уровень повторения слова
     efactor: { type: Number, default: 2.5 }, // Фактор усвоения слова, начальное значение 2.5 для SM-2
     studied: { type: Boolean, default: false },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true, // Добавляем эту строку для автоматического создания полей createdAt и updatedAt
