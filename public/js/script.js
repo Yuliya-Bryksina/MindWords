@@ -222,14 +222,19 @@ function loadWord(word, context) {
 
 function initializeProgressBar(wordCount) {
   const progressBar = document.getElementById("progressBar");
+  console.log("Initializing progress bar with wordCount:", wordCount); // Отладка
   progressBar.innerHTML = ""; // Очищаем текущий прогресс-бар
+
   for (let i = 0; i < wordCount; i++) {
     const progressItem = document.createElement("div");
     progressItem.classList.add("progress-item"); // добавляем класс для стилизации
-    progressItem.style.flex = "1"; // элементы прогресс-бара будут иметь одинаковую ширину
+    // Дополнительные отладочные стили:
+    progressItem.style.flex = "1";
     progressItem.style.backgroundColor = "#e0e0e0"; // начальный цвет серый
     progressItem.style.borderRadius = "5px"; // закругляем углы
     progressItem.style.margin = "0 2px"; // добавляем отступы между элементами
+
+    console.log("Adding progress item:", progressItem); // Отладка
     progressBar.appendChild(progressItem);
   }
 }
@@ -282,6 +287,7 @@ function openNewWordsModal() {
     .then((data) => {
       wordList = data;
       currentWordIndex = 0;
+      console.log("wordList.length:", wordList.length);
       initializeProgressBar(wordList.length);
       if (wordList.length > 0) {
         const firstWord = wordList[currentWordIndex]; // Получаем первое слово
@@ -301,6 +307,8 @@ function openWordsToReviewModal() {
       if (data.length > 0) {
         wordList = data;
         currentWordIndex = 0;
+        console.log("wordList.length:", wordList.length);
+        initializeProgressBar(wordList.length); // Инициализируем прогресс-бар для слов на повторение
         loadWord(wordList[currentWordIndex], currentContext);
       }
     })
@@ -748,14 +756,17 @@ function showDefinition() {
           document.getElementById("wordInEnglish").textContent = data.term;
           document.getElementById("wordTranscription").textContent =
             data.transcription;
-          document.getElementById("wordDefinition").style.display = "block";
+          document.getElementById("wordDefinition").style.visibility =
+            "visible";
+          document.getElementById("wordDefinition").style.height = "70px";
         } else if (currentContext === "reviewWord") {
           document.getElementById("reviewWordInEnglish").textContent =
             data.term;
           document.getElementById("reviewWordTranscription").textContent =
             data.transcription;
-          document.getElementById("reviewWordDefinition").style.display =
-            "block";
+          document.getElementById("reviewWordDefinition").style.visibility =
+            "visible";
+          document.getElementById("reviewWordDefinition").style.height = "70px";
         }
       })
       .catch((error) => {
@@ -834,28 +845,35 @@ function handleLastWord() {
 // Добавление прослушивателя для кнопки "Показать определение"
 const showDefinitionButton = document.getElementById("showDefinition");
 if (showDefinitionButton) {
-  showDefinitionButton.addEventListener("click", showDefinition);
   showDefinitionButton.addEventListener("click", function () {
-    var wordDefinition = document.getElementById("wordDefinition");
-    if (wordDefinition) {
-      wordDefinition.classList.toggle("hidden");
-      wordDefinition.classList.toggle("visible");
-      this.style.display = "none"; // Скрываем кнопку "Показать определение"
+    const wordDefinition = document.getElementById("wordDefinition");
+    if (wordDefinition.classList.contains("hidden")) {
+      wordDefinition.classList.remove("hidden");
+      wordDefinition.classList.add("visible");
+    } else {
+      wordDefinition.classList.add("hidden");
+      wordDefinition.classList.remove("visible");
     }
+    this.style.display = "none"; // Скрываем кнопку "Показать определение"
   });
 }
+
 const showReviewDefinitionButton = document.getElementById(
   "showReviewDefinition"
 );
 if (showReviewDefinitionButton) {
-  showReviewDefinitionButton.addEventListener("click", showDefinition);
   showReviewDefinitionButton.addEventListener("click", function () {
-    var reviewWordDefinition = document.getElementById("reviewWordDefinition");
-    if (reviewWordDefinition) {
-      reviewWordDefinition.classList.toggle("hidden");
-      reviewWordDefinition.classList.toggle("visible");
-      this.style.display = "none"; // Скрываем кнопку "Показать определение" в модальном окне повторения
+    const reviewWordDefinition = document.getElementById(
+      "reviewWordDefinition"
+    );
+    if (reviewWordDefinition.classList.contains("hidden")) {
+      reviewWordDefinition.classList.remove("hidden");
+      reviewWordDefinition.classList.add("visible");
+    } else {
+      reviewWordDefinition.classList.add("hidden");
+      reviewWordDefinition.classList.remove("visible");
     }
+    this.style.display = "none"; // Скрываем кнопку "Показать определение" в модальном окне повторения
   });
 }
 

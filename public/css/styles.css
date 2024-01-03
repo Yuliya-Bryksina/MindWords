@@ -626,7 +626,13 @@ h2 {
   margin: auto; /* Центрирование контейнера на странице */
 }
 .hidden {
-  display: none;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+.visible {
+  visibility: visible;
+  height: auto; /* или задайте фиксированную высоту, если нужно */
 }
 
 form {
@@ -695,8 +701,8 @@ input[type="text"]:focus {
 
 #progressBarContainer {
   width: 100%;
-  height: 60px;
-  margin: 20px 0;
+  height: 70px;
+  margin: 10px 0;
   padding: 5px;
   border-radius: 5px; /* закругленные углы контейнера */
   /* margin-top: 50px; */

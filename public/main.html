@@ -78,7 +78,7 @@
       <div class="modal-content">
         <span class="close">&times;</span>
         <p id="studyWord">Слово для изучения</p>
-        <div id="wordDefinition" style="display: none">
+        <div id="wordDefinition" style="visibility: hidden; height: 70px;">
           <span id="wordInEnglish"></span><br />
           <span id="wordTranscription"></span>
         </div>
@@ -89,9 +89,8 @@
         </div>
         <div id="progressBarContainer">
            <span>Прогресс изучения:</span>
-           <div id="progressBar">
-          </div>
-          </div>
+           <div id="progressBar"></div>
+        </div>
         <div class="modal-footer">
           <button id="knowWordButton">Я уже знаю это слово</button>
           <button id="learnWordButton">Начать учить это слово</button>
@@ -103,13 +102,19 @@
       <div class="modal-content">
         <span class="close">&times;</span>
         <p id="reviewStudyWord">Слово для повторения</p>
-        <div id="reviewWordDefinition" style="display: none">
+        <div id="reviewWordDefinition" style="visibility: hidden; height: 70px;">
           <span id="reviewWordInEnglish"></span><br />
           <span id="reviewWordTranscription"></span>
         </div>
-        <button id="showReviewDefinition" onclick="showDefinition()">
-          Показать определение
-        </button>
+        <div class="defenitionButtonContainer">
+          <button id="showReviewDefinition" onclick="showDefinition()">
+           Показать определение
+          </button>
+        </div>
+        <div id="progressBarContainer">
+          <span>Прогресс изучения:</span>
+          <div id="progressBar"></div>
+       </div>
         <div class="modal-footer">
           <button id="knowReviewWordButton">Я уже знаю это слово</button>
           <button id="learnReviewWordButton">Начать учить это слово</button>
