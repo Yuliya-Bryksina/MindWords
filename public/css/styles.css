@@ -749,3 +749,7 @@ input[type="text"]:focus {
 .progress-item-complete {
   background-color: green;
 }
+
+.progress-item.learned {
+  background-color: green; /* Или любой другой цвет, который вы выбрали */
+}

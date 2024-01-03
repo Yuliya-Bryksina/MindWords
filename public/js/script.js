@@ -233,14 +233,14 @@ function initializeProgressBar(wordCount, progressBarId) {
   }
 }
 
-function updateProgressBar(index) {
+function updateProgressBar(index, status) {
   const progressBarItems = document.querySelectorAll(".progress-item");
   if (progressBarItems.length > index) {
-    // проверяем, существует ли элемент
-    progressBarItems[index].classList.add("active"); // добавляем класс 'active' к элементу
+    if (status === "изучено") {
+      progressBarItems[index].classList.add("learned"); // Добавляем класс для изученного слова
+    }
   }
 }
-
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
   return fetch("/update-word-status", {
@@ -300,30 +300,32 @@ function openWordsToReviewModal() {
     .catch((error) => console.error("Ошибка: ", error));
 }
 
-function updateProgressBar(index, progressBarId) {
-  const progressBarItems = document.getElementById(progressBarId).children;
+function updateProgressBar(index, status) {
+  const progressBarItems = document.querySelectorAll(".progress-item");
   if (progressBarItems.length > index) {
-    progressBarItems[index].classList.add("progress-item-complete");
+    if (status === "изучено") {
+      progressBarItems[index].classList.add("learned"); // Добавляем класс для изученного слова
+    } // Не делаем ничего для неизученного слова
   }
 }
 
+let learnedWordsCount = 0; // Счетчик изученных слов
+
 function handleKnowWordClick() {
   const wordId = this.dataset.wordId;
-  const progressBarId =
-    currentContext === "newWord"
-      ? "newWordsProgressBar"
-      : "reviewWordsProgressBar";
-  updateProgressBar(currentWordIndex, progressBarId); // Обновляем соответствующий прогресс-бар
 
   updateWordStatus(wordId, true).then(() => {
     // Удаляем текущее слово из списка, так как оно уже изучено
     wordList = wordList.filter((word) => word._id !== wordId);
 
-    // Если все слова изучены, вызываем handleLastWord
+    // Обновляем прогресс-бар для изученного слова
+    updateProgressBar(learnedWordsCount, "изучено");
+    learnedWordsCount++;
+
     if (wordList.length === 0) {
       handleLastWord();
     } else {
-      // Переходим к следующему слову
+      // Переходим к следующему слову в списке
       currentWordIndex = (currentWordIndex + 1) % wordList.length;
       loadWord(wordList[currentWordIndex], currentContext);
     }
@@ -334,27 +336,18 @@ function handleLearnWordClick() {
   const wordId = this.dataset.wordId;
 
   updateWordStatus(wordId, false).then(() => {
-    // Находим слово в списке
     const wordToRelearnIndex = wordList.findIndex(
       (word) => word._id === wordId
     );
 
     if (wordToRelearnIndex !== -1) {
-      // Убираем слово из текущей позиции и добавляем в конец списка
       const [wordToRelearn] = wordList.splice(wordToRelearnIndex, 1);
       wordList.push(wordToRelearn);
     }
 
-    // Переходим к следующему слову
+    // Переходим к следующему слову, не обновляя прогресс-бар
     currentWordIndex = (currentWordIndex + 1) % wordList.length;
     loadWord(wordList[currentWordIndex], currentContext);
-
-    // Обновляем соответствующий прогресс-бар
-    const progressBarId =
-      currentContext === "newWord"
-        ? "newWordsProgressBar"
-        : "reviewWordsProgressBar";
-    updateProgressBar(currentWordIndex, progressBarId);
   });
 }
 
