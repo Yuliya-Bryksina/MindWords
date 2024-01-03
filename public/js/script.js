@@ -103,7 +103,15 @@ function addWord() {
   const wordInputValue = document.getElementById("wordInput").value;
   const transcriptionValue = document.getElementById("transcription").value;
   const translationValue = document.getElementById("translation").value;
-  const selectedDeckId = document.getElementById("deckSelect").value; // Убедитесь, что это правильный id вашего элемента выбора колоды
+  const selectedDeckId = document.getElementById("deckSelect").value;
+
+  // Проверяем, что поля "Слово на английском" и "Перевод" заполнены
+  if (!wordInputValue.trim() || !translationValue.trim()) {
+    showNotification(
+      "Пожалуйста, заполните поля 'Слово на английском' и 'Перевод'"
+    );
+    return; // Прерываем функцию, если какое-либо из полей пустое
+  }
 
   const wordData = {
     term: wordInputValue,
@@ -132,7 +140,7 @@ function addWord() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ wordId: createdWord._id }), // Отправляем ObjectID созданного слова
+        body: JSON.stringify({ wordId: createdWord._id }),
       });
     })
     .then((response) => {
