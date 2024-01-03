@@ -243,7 +243,7 @@ function updateProgressBar(index) {
 
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
-  fetch("/update-word-status", {
+  return fetch("/update-word-status", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -258,15 +258,6 @@ function updateWordStatus(wordId, knowsWord) {
     })
     .then((data) => {
       console.log("Word updated", data);
-      // Move to the next word
-      if (currentWordIndex < wordList.length - 1) {
-        currentWordIndex++;
-        console.log(currentWordIndex);
-        loadWord(wordList[currentWordIndex], currentContext);
-      } else {
-        // Handle the scenario when no more words are left
-        handleLastWord();
-      }
     })
     .catch((error) => {
       console.error("Error updating word status:", error);
@@ -323,17 +314,48 @@ function handleKnowWordClick() {
       ? "newWordsProgressBar"
       : "reviewWordsProgressBar";
   updateProgressBar(currentWordIndex, progressBarId); // Обновляем соответствующий прогресс-бар
-  updateWordStatus(wordId, true);
+
+  updateWordStatus(wordId, true).then(() => {
+    // Удаляем текущее слово из списка, так как оно уже изучено
+    wordList = wordList.filter((word) => word._id !== wordId);
+
+    // Если все слова изучены, вызываем handleLastWord
+    if (wordList.length === 0) {
+      handleLastWord();
+    } else {
+      // Переходим к следующему слову
+      currentWordIndex = (currentWordIndex + 1) % wordList.length;
+      loadWord(wordList[currentWordIndex], currentContext);
+    }
+  });
 }
 
 function handleLearnWordClick() {
   const wordId = this.dataset.wordId;
-  const progressBarId =
-    currentContext === "newWord"
-      ? "newWordsProgressBar"
-      : "reviewWordsProgressBar";
-  updateProgressBar(currentWordIndex, progressBarId); // Обновляем соответствующий прогресс-бар
-  updateWordStatus(wordId, false);
+
+  updateWordStatus(wordId, false).then(() => {
+    // Находим слово в списке
+    const wordToRelearnIndex = wordList.findIndex(
+      (word) => word._id === wordId
+    );
+
+    if (wordToRelearnIndex !== -1) {
+      // Убираем слово из текущей позиции и добавляем в конец списка
+      const [wordToRelearn] = wordList.splice(wordToRelearnIndex, 1);
+      wordList.push(wordToRelearn);
+    }
+
+    // Переходим к следующему слову
+    currentWordIndex = (currentWordIndex + 1) % wordList.length;
+    loadWord(wordList[currentWordIndex], currentContext);
+
+    // Обновляем соответствующий прогресс-бар
+    const progressBarId =
+      currentContext === "newWord"
+        ? "newWordsProgressBar"
+        : "reviewWordsProgressBar";
+    updateProgressBar(currentWordIndex, progressBarId);
+  });
 }
 
 function addEventListeners(button, wordId, knowsWord) {
@@ -794,20 +816,19 @@ function showDefinition() {
 }
 
 function handleLastWord() {
-  // Определяем модальное окно в зависимости от текущего контекста
-  let modalContent;
-  if (currentContext === "newWord") {
-    modalContent = document
-      .getElementById("studyModal")
-      .getElementsByClassName("modal-content")[0];
-  } else if (currentContext === "reviewWord") {
-    modalContent = document
-      .getElementById("wordsToReviewModal")
-      .getElementsByClassName("modal-content")[0];
-  }
+  if (wordList.length === 0) {
+    // Определяем модальное окно в зависимости от текущего контекста
+    let modalContent;
+    if (currentContext === "newWord") {
+      modalContent = document
+        .getElementById("studyModal")
+        .getElementsByClassName("modal-content")[0];
+    } else if (currentContext === "reviewWord") {
+      modalContent = document
+        .getElementById("wordsToReviewModal")
+        .getElementsByClassName("modal-content")[0];
+    }
 
-  // Проверяем, является ли текущее слово последним в списке
-  if (currentWordIndex === wordList.length - 1) {
     // Скрыть все элементы управления внутри модального окна
     let elementsToHide = modalContent
       .getElementsByClassName("modal-footer")[0]
@@ -830,7 +851,7 @@ function handleLastWord() {
       }
     });
 
-    // Отобразить сообщение
+    // Отобразить сообщение "На сегодня это все"
     const message = document.createElement("p");
     message.textContent = "На сегодня это все, вы хорошо позанимались!!!";
     message.style.textAlign = "center";
@@ -843,8 +864,8 @@ function handleLastWord() {
     }
     modalContent.appendChild(message);
   } else {
-    // Логика для загрузки следующего слова, если это не последнее слово
-    currentWordIndex++; // Переходим к следующему слову
+    // Если в списке остались слова, продолжаем изучение
+    currentWordIndex = (currentWordIndex + 1) % wordList.length;
     loadWord(wordList[currentWordIndex], currentContext);
   }
 }
