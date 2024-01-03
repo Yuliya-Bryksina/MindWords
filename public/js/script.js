@@ -375,15 +375,18 @@ if (closeBtn) {
   });
 }
 
-// Закрытие модального окна по клику вне окна
 window.addEventListener("click", function (event) {
   const studyModal = document.getElementById("studyModal");
   const wordsToReviewModal = document.getElementById("wordsToReviewModal");
 
   if (event.target === studyModal) {
     studyModal.style.display = "none";
+    updateDailyTasks();
+    updateNewWordsCount(); // Обновление счетчика новых слов
   } else if (event.target === wordsToReviewModal) {
     wordsToReviewModal.style.display = "none";
+    updateDailyTasks();
+    updateNewWordsCount(); // Обновление счетчиков для повторения слов
   }
 });
 
@@ -895,6 +898,8 @@ const closeModalButton = document.querySelector(".modal .close");
 if (closeModalButton) {
   closeModalButton.addEventListener("click", function () {
     this.parentElement.parentElement.style.display = "none";
+    updateNewWordsCount();
+    updateDailyTasks();
   });
 }
 
