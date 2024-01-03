@@ -82,9 +82,16 @@
           <span id="wordInEnglish"></span><br />
           <span id="wordTranscription"></span>
         </div>
-        <button id="showDefinition" onclick="showDefinition()">
-          Показать определение
-        </button>
+        <div class="defenitionButtonContainer">
+          <button id="showDefinition" onclick="showDefinition()">
+            Показать определение
+          </button>
+        </div>
+        <div id="progressBarContainer">
+           <span>Прогресс изучения:</span>
+           <div id="progressBar">
+          </div>
+          </div>
         <div class="modal-footer">
           <button id="knowWordButton">Я уже знаю это слово</button>
           <button id="learnWordButton">Начать учить это слово</button>

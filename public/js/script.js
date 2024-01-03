@@ -220,6 +220,28 @@ function loadWord(word, context) {
   }
 }
 
+function initializeProgressBar(wordCount) {
+  const progressBar = document.getElementById("progressBar");
+  progressBar.innerHTML = ""; // Очищаем текущий прогресс-бар
+  for (let i = 0; i < wordCount; i++) {
+    const progressItem = document.createElement("div");
+    progressItem.classList.add("progress-item"); // добавляем класс для стилизации
+    progressItem.style.flex = "1"; // элементы прогресс-бара будут иметь одинаковую ширину
+    progressItem.style.backgroundColor = "#e0e0e0"; // начальный цвет серый
+    progressItem.style.borderRadius = "5px"; // закругляем углы
+    progressItem.style.margin = "0 2px"; // добавляем отступы между элементами
+    progressBar.appendChild(progressItem);
+  }
+}
+
+function updateProgressBar(index) {
+  const progressBarItems = document.querySelectorAll(".progress-item");
+  if (progressBarItems.length > index) {
+    // проверяем, существует ли элемент
+    progressBarItems[index].classList.add("active"); // добавляем класс 'active' к элементу
+  }
+}
+
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, knowsWord) {
   fetch("/update-word-status", {
@@ -260,6 +282,7 @@ function openNewWordsModal() {
     .then((data) => {
       wordList = data;
       currentWordIndex = 0;
+      initializeProgressBar(wordList.length);
       if (wordList.length > 0) {
         const firstWord = wordList[currentWordIndex]; // Получаем первое слово
         loadWord(firstWord, currentContext); // Загружаем первое слово в модальное окно для новых слов
@@ -284,13 +307,20 @@ function openWordsToReviewModal() {
     .catch((error) => console.error("Ошибка: ", error));
 }
 
+function updateProgressBar(index) {
+  const progressBar = document.getElementById("progressBar").children;
+  progressBar[index].style.backgroundColor = "green";
+}
+
 function handleKnowWordClick() {
   const wordId = this.dataset.wordId;
+  updateProgressBar(currentWordIndex); // Обновляем прогресс-бар
   updateWordStatus(wordId, true);
 }
 
 function handleLearnWordClick() {
   const wordId = this.dataset.wordId;
+  updateProgressBar(currentWordIndex); // Обновляем прогресс-бар
   updateWordStatus(wordId, false);
 }
 

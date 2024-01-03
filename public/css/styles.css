@@ -177,7 +177,7 @@ input[readonly] {
   background-color: #fcf8f8; /* Фон модального окна */
   width: 50%; /* Ширина модального окна (можете настроить по своему усмотрению) */
   max-width: 400px;
-  height: 50%; /* Максимальная ширина модального окна */
+  height: 60%; /* Максимальная ширина модального окна */
   margin: 10% auto; /* Расположение по центру экрана по вертикали и горизонтали */
   padding: 30px;
   border-radius: 15px; /* Закругление углов */
@@ -186,7 +186,7 @@ input[readonly] {
   display: flex;
   flex-direction: column; /* Структура колонки для внутренних элементов */
   cursor: default;
-  justify-content: space-between; /* Устанавливает обычный курсор, чтобы переопределить стиль .modal */
+  justify-content: space-between;
 }
 .deck-creation-modal .modal-content {
   width: 300px; /* установите нужную ширину */
@@ -212,6 +212,18 @@ input[readonly] {
   margin-top: 20px; /* Это добавит пространство между содержимым и .modal-footer */
   display: flex;
   justify-content: space-between; /* Для равномерного распределения кнопок внутри */
+  height: 50px;
+}
+#progressBarContainer,
+.modal-footer {
+  flex-shrink: 0;
+}
+
+.defenitionButtonContainer {
+  height: 50px; /* Присвойте высоту, соответствующую высоте кнопки */
+  display: flex; /* Используйте flexbox для выравнивания кнопки */
+  justify-content: center; /* Центрируйте кнопку по горизонтали */
+  align-items: center; /* Центрируйте кнопку по вертикали */
 }
 
 .modal-footer button {
@@ -246,14 +258,21 @@ input[readonly] {
 /* Стили для английского слова и транскрипции, которые будут показаны после нажатия на кнопку */
 #wordDefinition,
 #reviewWordDefinition {
-  text-align: center;
-  display: none; /* Скрыть элементы до нажатия на кнопку */
+  visibility: hidden; /* Скрываем содержимое */
+  height: 70px; /* Заранее установленная высота блока */
+  overflow: hidden; /* Содержимое за пределами блока не показывается */
+}
+
+#wordDefinition.visible {
+  visibility: visible; /* Содержимое становится видимым */
+  /* Высота уже фиксирована, поэтому не меняется */
 }
 
 #showDefinition,
 #showReviewDefinition {
-  margin-top: 70px;
+  /* margin-top: 70px; */
   border-radius: 20px;
+  /* margin-bottom: 100px; */
 }
 /* Скрытый по умолчанию контент */
 .hidden-content {
@@ -672,4 +691,30 @@ input[type="text"]:focus {
 
 .checkbox-container label {
   margin-left: 5px; /* Отступ между чекбоксом и текстом */
+}
+
+#progressBarContainer {
+  width: 100%;
+  height: 60px;
+  margin: 20px 0;
+  padding: 5px;
+  border-radius: 5px; /* закругленные углы контейнера */
+  /* margin-top: 50px; */
+}
+
+#progressBar {
+  display: flex;
+  height: 20px;
+  background: transparent; /* убедитесь, что фон прогресс-бара прозрачен */
+  align-items: center; /* выравнивание элементов по центру */
+}
+
+.progress-item {
+  height: 5px;
+  border-radius: 5px; /* закругленные углы для элементов */
+  margin: 0 2px; /* отступы между элементами */
+}
+
+.progress-item.active {
+  background-color: #4caf50; /* зеленый цвет для активных элементов */
 }
