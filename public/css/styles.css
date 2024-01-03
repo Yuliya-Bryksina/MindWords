@@ -261,13 +261,26 @@ input[readonly] {
   visibility: hidden; /* Скрываем содержимое */
   height: 70px; /* Заранее установленная высота блока */
   overflow: hidden; /* Содержимое за пределами блока не показывается */
+  padding-top: 20px;
+}
+#reviewWordDefinition {
+  display: flex; /* Используйте flexbox для выравнивания содержимого */
+  flex-direction: column; /* Ориентация содержимого в колонку */
+  justify-content: center; /* Центрирование содержимого по вертикали */
+  align-items: center; /* Центрирование содержимого по горизонтали */
+  text-align: center; /* Центрирование текста, если он не занимает всю ширину */
+  padding-top: 20px;
+}
+
+#reviewWordDefinition.visible {
+  visibility: visible; /* Содержимое становится видимым */
+  /* Высота уже фиксирована, поэтому не меняется */
 }
 
 #wordDefinition.visible {
   visibility: visible; /* Содержимое становится видимым */
   /* Высота уже фиксирована, поэтому не меняется */
 }
-
 #showDefinition,
 #showReviewDefinition {
   /* margin-top: 70px; */
@@ -701,14 +714,15 @@ input[type="text"]:focus {
 
 #progressBarContainer {
   width: 100%;
-  height: 70px;
-  margin: 10px 0;
+  height: 50px;
+  /* margin: 10px 0; */
   padding: 5px;
   border-radius: 5px; /* закругленные углы контейнера */
-  /* margin-top: 50px; */
+  margin-top: auto;
 }
 
-#progressBar {
+#newWordsProgressBar,
+#reviewWordsProgressBar {
   display: flex;
   height: 20px;
   background: transparent; /* убедитесь, что фон прогресс-бара прозрачен */
@@ -723,4 +737,15 @@ input[type="text"]:focus {
 
 .progress-item.active {
   background-color: #4caf50; /* зеленый цвет для активных элементов */
+}
+
+.progress-item {
+  flex: 1;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin: 0 2px;
+}
+
+.progress-item-complete {
+  background-color: green;
 }

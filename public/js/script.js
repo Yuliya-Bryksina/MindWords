@@ -220,21 +220,15 @@ function loadWord(word, context) {
   }
 }
 
-function initializeProgressBar(wordCount) {
-  const progressBar = document.getElementById("progressBar");
-  console.log("Initializing progress bar with wordCount:", wordCount); // Отладка
-  progressBar.innerHTML = ""; // Очищаем текущий прогресс-бар
+function initializeProgressBar(wordCount, progressBarId) {
+  const progressBar = document.getElementById(progressBarId);
+  console.log("Initializing progress bar with wordCount:", wordCount);
+  progressBar.innerHTML = "";
 
   for (let i = 0; i < wordCount; i++) {
     const progressItem = document.createElement("div");
-    progressItem.classList.add("progress-item"); // добавляем класс для стилизации
-    // Дополнительные отладочные стили:
-    progressItem.style.flex = "1";
-    progressItem.style.backgroundColor = "#e0e0e0"; // начальный цвет серый
-    progressItem.style.borderRadius = "5px"; // закругляем углы
-    progressItem.style.margin = "0 2px"; // добавляем отступы между элементами
-
-    console.log("Adding progress item:", progressItem); // Отладка
+    progressItem.classList.add("progress-item");
+    console.log("Adding progress item:", progressItem);
     progressBar.appendChild(progressItem);
   }
 }
@@ -288,7 +282,7 @@ function openNewWordsModal() {
       wordList = data;
       currentWordIndex = 0;
       console.log("wordList.length:", wordList.length);
-      initializeProgressBar(wordList.length);
+      initializeProgressBar(wordList.length, "newWordsProgressBar");
       if (wordList.length > 0) {
         const firstWord = wordList[currentWordIndex]; // Получаем первое слово
         loadWord(firstWord, currentContext); // Загружаем первое слово в модальное окно для новых слов
@@ -308,27 +302,37 @@ function openWordsToReviewModal() {
         wordList = data;
         currentWordIndex = 0;
         console.log("wordList.length:", wordList.length);
-        initializeProgressBar(wordList.length); // Инициализируем прогресс-бар для слов на повторение
+        initializeProgressBar(wordList.length, "reviewWordsProgressBar"); // Инициализируем прогресс-бар для слов на повторение
         loadWord(wordList[currentWordIndex], currentContext);
       }
     })
     .catch((error) => console.error("Ошибка: ", error));
 }
 
-function updateProgressBar(index) {
-  const progressBar = document.getElementById("progressBar").children;
-  progressBar[index].style.backgroundColor = "green";
+function updateProgressBar(index, progressBarId) {
+  const progressBarItems = document.getElementById(progressBarId).children;
+  if (progressBarItems.length > index) {
+    progressBarItems[index].classList.add("progress-item-complete");
+  }
 }
 
 function handleKnowWordClick() {
   const wordId = this.dataset.wordId;
-  updateProgressBar(currentWordIndex); // Обновляем прогресс-бар
+  const progressBarId =
+    currentContext === "newWord"
+      ? "newWordsProgressBar"
+      : "reviewWordsProgressBar";
+  updateProgressBar(currentWordIndex, progressBarId); // Обновляем соответствующий прогресс-бар
   updateWordStatus(wordId, true);
 }
 
 function handleLearnWordClick() {
   const wordId = this.dataset.wordId;
-  updateProgressBar(currentWordIndex); // Обновляем прогресс-бар
+  const progressBarId =
+    currentContext === "newWord"
+      ? "newWordsProgressBar"
+      : "reviewWordsProgressBar";
+  updateProgressBar(currentWordIndex, progressBarId); // Обновляем соответствующий прогресс-бар
   updateWordStatus(wordId, false);
 }
 
@@ -758,7 +762,7 @@ function showDefinition() {
             data.transcription;
           document.getElementById("wordDefinition").style.visibility =
             "visible";
-          document.getElementById("wordDefinition").style.height = "70px";
+          document.getElementById("wordDefinition").style.height = "90px";
         } else if (currentContext === "reviewWord") {
           document.getElementById("reviewWordInEnglish").textContent =
             data.term;
@@ -766,7 +770,7 @@ function showDefinition() {
             data.transcription;
           document.getElementById("reviewWordDefinition").style.visibility =
             "visible";
-          document.getElementById("reviewWordDefinition").style.height = "70px";
+          document.getElementById("reviewWordDefinition").style.height = "90px";
         }
       })
       .catch((error) => {
@@ -781,7 +785,7 @@ function showDefinition() {
       document.getElementById("reviewWordInEnglish").style.display = "block";
       document.getElementById("reviewWordTranscription").style.display =
         "block";
-      document.getElementById("reviewWordDefinition").style.display = "none";
+      // document.getElementById("reviewWordDefinition").style.display = "none";
     }
   }
 }
