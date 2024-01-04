@@ -10,6 +10,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
     <title>Интервальное Повторение</title>
     <style>
       /* Ваши стили здесь */
@@ -97,6 +99,30 @@
         </div>
       </div>
     </div>
+    <section class="rounded-section">
+      <div id="drop-area">
+        <form class="my-form">
+          <p>Загрузите файл со словами или перетащите его сюда</p>
+          <input type="file" id="fileElem" multiple accept=".csv" style="display: none;">
+          <label for="fileElem" class="button">
+            <i class="fa-solid fa-file-csv"></i> Выбрать файл
+          </label>
+          <span id="file-name"></span> <!-- Контейнер для имени файла -->
+        </form>
+      </div>
+      
+      <select id="deck-select">
+        <!-- Здесь будут опции с колодами -->
+      </select>
+
+      <div id="preview-container">
+        <table id="preview-table">
+          <!-- Содержимое таблицы -->
+        </table>
+      </div>
+      <button id="import-button" disabled>Импортировать</button>
+      
+    </section>
     <!-- Модальное окно для слов на повторение -->
     <div id="wordsToReviewModal" class="modal">
       <div class="modal-content">

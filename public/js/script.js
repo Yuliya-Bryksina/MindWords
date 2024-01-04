@@ -2,6 +2,7 @@ let currentWordIndex = 0; // Индекс текущего слова
 let wordList = []; // Список слов
 let currentContext = ""; // "newWord" или "reviewWord"
 let wordChanges = {}; // Ключ - это ID слова, значение - объект с изменениями
+let parsedWords = []; // Глобальная переменная для хранения разобранных слов
 
 if (window.location.pathname.includes("/deck.html")) {
   loadDeckWords();
@@ -376,7 +377,8 @@ function initializeUserSession() {
   // Здесь можно добавить любую логику инициализации, которая должна происходить после входа пользователя
   updateDailyTasks();
   updateNewWordsCount();
-  getDecks();
+  getDecks("deckSelect"); // Идентификатор для существующего select
+  getDecks("deck-select"); // Идентификатор для нового select
   loadDecks();
   // ... любые другие функции инициализации
 }
@@ -709,10 +711,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
       window.location.pathname === "/main.html"
     ) {
       // Вызываем функции, которые должны работать на главной странице для авторизованного пользователя
-      getDecks();
       updateNewWordsCount();
       updateDailyTasks();
-      getDecks();
+      getDecks("deckSelect");
+      getDecks("deck-select");
       loadDecks();
     }
   }
@@ -728,6 +730,17 @@ document.addEventListener("DOMContentLoaded", (event) => {
       loginUser(email, password, rememberMe);
     });
   }
+  document
+    .getElementById("import-button")
+    .addEventListener("click", function () {
+      console.log("Import button clicked"); // Добавьте это для дебага
+      const selectedDeckId = document.getElementById("deck-select").value;
+      if (selectedDeckId && parsedWords.length) {
+        importWords(selectedDeckId, parsedWords);
+      } else {
+        alert("Выберите колоду и/или загрузите файл для импорта");
+      }
+    });
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -971,7 +984,7 @@ function createDeck(deckName) {
     .then((response) => response.json())
     .then((data) => {
       console.log("Deck created:", data);
-      getDecks(); // Обновление списка колод
+      getDecks("deckSelect"); // Обновление списка колод
       document.getElementById("newDeckModal").style.display = "none"; // Закрытие модального окна
       document.getElementById("newDeckName").value = ""; // Очистка поля ввода названия колоды
     })
@@ -997,16 +1010,11 @@ if (newDeckForm) {
 }
 
 // Получение списка колод
-function getDecks() {
-  console.log("Начало функции getDecks");
+function getDecks(selectId) {
   fetch("/decks")
-    .then((response) => {
-      console.log("Получен ответ от сервера");
-      return response.json();
-    })
+    .then((response) => response.json())
     .then((data) => {
-      console.log("Колоды получены:", data);
-      const deckSelect = document.getElementById("deckSelect");
+      const deckSelect = document.getElementById(selectId);
       if (deckSelect) {
         deckSelect.innerHTML = '<option value="">Выберите колоду</option>';
         data.forEach((deck) => {
@@ -1417,3 +1425,233 @@ function loginUser(email, password, rememberMe) {
       showNotification("Ошибка сети: " + error.message);
     });
 }
+
+document.getElementById("fileElem").addEventListener("change", handleFiles);
+
+// Эта функция вызывается, когда файл выбран
+function handleFiles(event) {
+  const files = event.target.files;
+  if (files.length) {
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const contents = e.target.result;
+      parsedWords = parseCSV(contents); // Парсинг CSV и сохранение в parsedWords
+      displayPreview(parsedWords); // Отображение предпросмотра данных
+    };
+    reader.readAsText(file);
+  }
+}
+
+function parseCSV(contents) {
+  // Парсинг CSV файла
+  const lines = contents.split("\n").slice(1); // Убираем первую строку с заголовками
+  const words = lines.map((line) => {
+    // Разбиваем строку с учетом кавычек и запятых внутри полей
+    const parts = line
+      .match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)
+      .map((part) =>
+        part.startsWith('"') && part.endsWith('"') ? part.slice(1, -1) : part
+      );
+    return {
+      term: parts[0],
+      transcription: parts[1] || "", // Если есть транскрипция, то берем её, иначе пустая строка
+      translation: parts[2] || parts[1], // Перевод берем из последней части
+    };
+  });
+  return words; // Возвращаем массив слов
+}
+
+function displayPreview(words) {
+  const previewTable = document.getElementById("preview-table");
+
+  // Очищаем таблицу и создаем заголовки
+  previewTable.innerHTML = `
+    <tr>
+      <th>Term</th>
+      <th>Transcription</th>
+      <th>Translation</th>
+    </tr>`;
+
+  // Добавляем строки для каждого слова
+  words.forEach((word) => {
+    const row = document.createElement("tr");
+
+    const termCell = document.createElement("td");
+    termCell.textContent = word.term;
+
+    const transcriptionCell = document.createElement("td");
+    transcriptionCell.textContent = word.transcription;
+
+    const translationCell = document.createElement("td");
+    translationCell.textContent = word.translation;
+
+    row.appendChild(termCell);
+    row.appendChild(transcriptionCell);
+    row.appendChild(translationCell);
+
+    previewTable.appendChild(row);
+  });
+}
+
+function importWords(deckId, words) {
+  fetch("/import-words", {
+    // Путь должен соответствовать серверному маршруту, который вы определите
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Убедитесь, что вы добавили необходимые заголовки для авторизации, если это требуется
+    },
+    body: JSON.stringify({ deckId, words }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        alert("Слова успешно добавлены в колоду.");
+      } else {
+        alert("Произошла ошибка: " + data.message);
+      }
+    })
+    .catch((error) => {
+      console.error("Ошибка при импорте слов:", error);
+      alert("Ошибка при импорте слов.");
+    });
+}
+
+const dropArea = document.getElementById("drop-area");
+
+dropArea.addEventListener("drop", (event) => {
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  handleFiles(files);
+});
+
+// function handleFiles(files) {
+//   const formData = new FormData();
+//   formData.append("file", files[0]);
+//   formData.append("deckId", document.getElementById("deck-select").value);
+
+//   fetch("/upload-csv", {
+//     method: "POST",
+//     body: formData,
+//   })
+//     .then((response) => response.json())
+//     .then((data) => {
+//       console.log(data);
+//       // Обработка успешной загрузки
+//     })
+//     .catch((error) => {
+//       console.error("Error:", error);
+//     });
+// }
+
+// Функция для обновления названия файла
+function updateFileName(event, file = null) {
+  let fileName;
+  const fileLabelSpan = document.getElementById("file-name");
+
+  // Проверяем, вызвана ли функция из события 'change' или 'drop'
+  if (file) {
+    // Если вызвана из 'drop'
+    fileName = file.name;
+  } else if (event && event.target.files.length > 0) {
+    // Если вызвана из 'change'
+    fileName = event.target.files[0].name;
+  } else {
+    fileLabelSpan.textContent = "Выберите файл"; // Если файл не выбран
+    return;
+  }
+
+  fileLabelSpan.textContent = fileName; // Обновляем имя файла
+}
+
+document.getElementById("fileElem").addEventListener("change", handleFiles);
+
+// Эта функция должна принимать массив файлов напрямую
+function handleFiles(files) {
+  const file = files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const contents = e.target.result;
+      parsedWords = parseCSV(contents); // Парсинг CSV и сохранение в parsedWords
+      displayPreview(parsedWords); // Отображение предпросмотра данных
+      if (parsedWords.length > 0) {
+        document.getElementById("import-button").disabled = false; // Активируем кнопку
+      }
+    };
+    reader.readAsText(file);
+  }
+}
+
+//уточнение, нужно ли
+function handleFileUpload(file) {
+  const formData = new FormData();
+  formData.append("file", file); // Добавляем файл
+  formData.append("deckId", selectedDeckId); // Добавляем ID колоды
+
+  fetch("/upload-csv", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // Обработка ответа от сервера
+    })
+    .catch((error) => {
+      console.error("Ошибка при отправке файла:", error);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Отслеживание изменений в input type="file"
+  // Обработчик для 'change' события input type="file"
+  document
+    .getElementById("fileElem")
+    .addEventListener("change", function (event) {
+      handleFiles(event.target.files); // Обработка файлов для отображения
+      updateFileName(event); // Обновление имени файла для отображения
+    });
+});
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+// Функции подсветки и убирания подсветки области drop
+function highlight(e) {
+  dropArea.classList.add("highlight");
+}
+
+function unhighlight(e) {
+  dropArea.classList.remove("highlight");
+}
+
+// Обработчик события drop
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropArea.classList.remove("highlight"); // Убрать выделение с drop area
+
+  let dt = e.dataTransfer;
+  let files = dt.files;
+
+  handleFiles(files); // Обработка файлов для отображения
+  updateFileName(null, files[0]); // Обновление имени файла для отображения
+}
+
+// Добавление слушателей событий для области drop
+["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+  dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  dropArea.addEventListener(eventName, highlight, false);
+});
+
+["dragleave", "drop"].forEach((eventName) => {
+  dropArea.addEventListener(eventName, unhighlight, false);
+});
+
+dropArea.addEventListener("drop", handleDrop, false);

@@ -10,7 +10,10 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-const router = express.Router();
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+const fs = require("fs");
+const { parse } = require("csv-parse"); // Файлы будут временно сохраняться в папке 'uploads'
 
 const app = express();
 
@@ -617,4 +620,113 @@ app.post("/logout", (req, res) => {
       res.send("User logged out.");
     }
   });
+});
+
+// Маршрут для загрузки файла CSV
+app.post(
+  "/upload-csv",
+  isAuthenticated,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const file = req.file; // Получаем файл из запроса
+      const deckId = req.body.deckId; // ID колоды для добавления слов
+      const words = await parseCsvFile(file.path); // Парсинг CSV файла
+
+      await addWordsToDeck(words, deckId, req.session.userId); // Добавление слов в колоду
+      res
+        .status(200)
+        .json({ success: true, message: "Слова успешно добавлены в колоду." });
+    } catch (error) {
+      console.error("Ошибка при загрузке CSV:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Ошибка при обработке файла." });
+    }
+  }
+);
+
+const parseCsvFile = (filePath) => {
+  return new Promise((resolve, reject) => {
+    const words = [];
+    fs.createReadStream(filePath)
+      .pipe(
+        parse({
+          from_line: 2, // Пропускаем строку с заголовками
+          trim: true,
+          columns: true, // Используем первую строку в качестве названий столбцов
+        })
+      )
+      .on("data", (row) => {
+        words.push({
+          term: row.term,
+          transcription: row.transcription || "", // Если нет транскрипции, используем пустую строку
+          translation: row.translation,
+        });
+      })
+      .on("end", () => {
+        resolve(words);
+      })
+      .on("error", (error) => {
+        reject(error);
+      });
+  });
+};
+
+// Функция для добавления слов в колоду
+const addWordsToDeck = async (words, deckId, userId) => {
+  const deck = await Deck.findById(deckId);
+  if (!deck) throw new Error("Deck not found.");
+
+  const wordsToInsert = words.map((wordData) => ({
+    term: wordData.term,
+    transcription: wordData.transcription,
+    translation: wordData.translation,
+    userId: userId, // Связываем слово с пользователем
+    // Поля со значениями по умолчанию не нужно добавлять
+  }));
+
+  const insertedWords = await Word.insertMany(wordsToInsert);
+  deck.words.push(...insertedWords.map((word) => word._id));
+  await deck.save();
+};
+
+// Маршрут для импорта слов в колоду
+app.post("/import-words", isAuthenticated, async (req, res) => {
+  const { deckId, words } = req.body;
+  const userId = req.session.userId; // ID пользователя из сессии
+
+  try {
+    const deck = await Deck.findOne({ _id: deckId, userId: userId });
+    if (!deck) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Колода не найдена." });
+    }
+
+    // Преобразуем слова в объекты для вставки в базу данных
+    const wordsToInsert = words.map((word) => ({
+      ...word,
+      userId: userId, // Добавляем ID пользователя к каждому слову
+    }));
+
+    // Вставляем слова в базу данных
+    const insertedWords = await Word.insertMany(wordsToInsert);
+
+    // Добавляем ID новых слов в колоду
+    deck.words.push(...insertedWords.map((word) => word._id));
+    await deck.save();
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Слова успешно импортированы в колоду.",
+      });
+  } catch (error) {
+    console.error("Ошибка при импорте слов:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Ошибка при импорте слов." });
+  }
 });

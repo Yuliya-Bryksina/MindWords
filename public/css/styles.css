@@ -751,5 +751,76 @@ input[type="text"]:focus {
 }
 
 .progress-item.learned {
-  background-color: green; /* Или любой другой цвет, который вы выбрали */
+  background-color: green; /* Или buttonлюбой другой цвет, который вы выбрали */
+}
+
+#preview-container {
+  max-height: 300px; /* Максимальная высота контейнера */
+  overflow-y: auto; /* Автоматическая вертикальная прокрутка, если содержимое переполняет контейнер */
+  border: 1px solid #ddd; /* Граница контейнера */
+}
+#drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 20px;
+  width: 80%;
+  margin: 10px auto;
+  padding: 20px;
+}
+
+#preview-table {
+  border-collapse: collapse; /* Убирает двойные линии между ячейками */
+  width: 100%; /* Устанавливает ширину таблицы на 100% от родительского элемента */
+  margin-bottom: 20px; /* Добавляет отступ снизу */
+}
+
+#preview-table th,
+#preview-table td {
+  border: 1px solid #ddd; /* Добавляет границу для каждой ячейки */
+  padding: 8px; /* Добавляет отступ внутри ячеек */
+  text-align: left; /* Выравнивание текста в ячейках */
+}
+
+#preview-table tr:nth-child(even) {
+  background-color: #f2f2f2; /* Зебра-стиль для строк таблицы */
+}
+
+#preview-table th {
+  background-color: #ced0f1; /* Цвет фона для заголовков таблицы */
+  color: white; /* Цвет текста для заголовков таблицы */
+}
+
+#deck-select {
+  margin-bottom: 20px; /* Добавляет отступ снизу */
+}
+
+#import-button {
+  width: auto; /* Автоматическая ширина по содержимому */
+  padding: 5px 10px; /* Пример отступов */
+  display: inline-block;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: transparent; /* Цвет фона */
+  color: #333; /* Цвет текста */
+  border: none; /* Убрать границу */
+  text-align: center; /* Центрировать текст */
+  font-size: 16px; /* Размер шрифта для иконки и текста */
+  border-radius: 5px; /* Скругление углов */
+}
+
+.button:hover {
+  background-color: transparent; /* Цвет фона при наведении */
+}
+
+.button i {
+  margin-right: 5px; /* Отступ справа от иконки */
+  font-size: 24px; /* Увеличиваем размер иконки */
+}
+
+#file-name {
+  display: block; /* или inline-block в зависимости от вашего предпочтения */
+  margin-top: 10px; /* отступ сверху, чтобы отделить имя файла от кнопки выбора файла */
 }
