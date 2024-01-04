@@ -758,6 +758,7 @@ input[type="text"]:focus {
   max-height: 300px; /* Максимальная высота контейнера */
   overflow-y: auto; /* Автоматическая вертикальная прокрутка, если содержимое переполняет контейнер */
   border: 1px solid #ddd; /* Граница контейнера */
+  display: none; /* Скрывать до загрузки файла */
 }
 #drop-area {
   border: 2px dashed #ccc;
@@ -817,7 +818,7 @@ input[type="text"]:focus {
 
 .button i {
   margin-right: 5px; /* Отступ справа от иконки */
-  font-size: 24px; /* Увеличиваем размер иконки */
+  font-size: 32px; /* Увеличиваем размер иконки */
 }
 
 #file-name {

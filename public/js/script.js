@@ -1576,6 +1576,7 @@ function handleFiles(files) {
       const contents = e.target.result;
       parsedWords = parseCSV(contents); // Парсинг CSV и сохранение в parsedWords
       displayPreview(parsedWords); // Отображение предпросмотра данных
+      displayPreviewContainer(); // Показываем контейнер для предпросмотра
       if (parsedWords.length > 0) {
         document.getElementById("import-button").disabled = false; // Активируем кнопку
       }
@@ -1639,6 +1640,7 @@ function handleDrop(e) {
 
   handleFiles(files); // Обработка файлов для отображения
   updateFileName(null, files[0]); // Обновление имени файла для отображения
+  displayPreviewContainer(); // Показываем контейнер для предпросмотра
 }
 
 // Добавление слушателей событий для области drop
@@ -1655,3 +1657,12 @@ function handleDrop(e) {
 });
 
 dropArea.addEventListener("drop", handleDrop, false);
+
+// Функция, которая отображает preview контейнер и обновляет подсказку
+function displayPreviewContainer() {
+  const previewContainer = document.getElementById("preview-container");
+  const dropArea = document.getElementById("drop-area");
+  previewContainer.style.display = "block"; // Показываем контейнер
+  dropArea.querySelector("p").textContent =
+    "Файл загружен. Проверьте предпросмотр перед импортом."; // Обновляем подсказку
+}
