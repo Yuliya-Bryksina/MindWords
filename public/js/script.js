@@ -1426,7 +1426,7 @@ function loginUser(email, password, rememberMe) {
     });
 }
 
-document.getElementById("fileElem").addEventListener("change", handleFiles);
+// document.getElementById("fileElem").addEventListener("change", handleFiles);
 
 // Эта функция вызывается, когда файл выбран
 function handleFiles(event) {
@@ -1565,9 +1565,9 @@ function updateFileName(event, file = null) {
   fileLabelSpan.textContent = fileName; // Обновляем имя файла
 }
 
-document.getElementById("fileElem").addEventListener("change", handleFiles);
+// document.getElementById("fileElem").addEventListener("change", handleFiles);
 
-// Эта функция должна принимать массив файлов напрямую
+// Эта функция будет вызвана когда пользователь выбирает файл через input или перетаскиванием
 function handleFiles(files) {
   const file = files[0];
   if (file) {
@@ -1576,12 +1576,10 @@ function handleFiles(files) {
       const contents = e.target.result;
       parsedWords = parseCSV(contents); // Парсинг CSV и сохранение в parsedWords
       displayPreview(parsedWords); // Отображение предпросмотра данных
-
-      // Если массив parsedWords не пуст, отображаем кнопку "Импортировать" и выпадающий список
-      if (parsedWords.length > 0) {
-        document.getElementById("import-button").style.display = "block";
-        document.getElementById("deck-select").style.display = "block";
-      }
+      displayPreviewContainer();
+      // Показываем кнопку "Импортировать" и выпадающий список
+      document.getElementById("import-button").style.display = "block";
+      document.getElementById("deck-select").style.display = "block";
     };
     reader.readAsText(file);
   }
