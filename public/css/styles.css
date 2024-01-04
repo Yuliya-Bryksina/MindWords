@@ -79,7 +79,7 @@ input:focus::placeholder {
   top: 20px;
   right: 20px;
   padding: 10px;
-  background-color: #4a7090; /* Зеленый фон */
+  background-color: #7489ff; /* Зеленый фон */
   color: white;
   text-align: center;
   border-radius: 5px;
@@ -103,10 +103,11 @@ input[type="text"],
   border: 1px solid #ddd;
   border-radius: 5px;
   box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 input[type="text"]:focus {
-  border-color: #7393a7;
+  border-color: #4a5dbb;
 }
 
 button {
@@ -114,7 +115,7 @@ button {
   padding: 10px;
   border: none;
   border-radius: 5px;
-  background-color: #7393a7;
+  background-color: #5c7aea;
   transition: background-color 0.3s;
   color: white;
   font-size: 16px;
@@ -123,7 +124,7 @@ button {
 }
 
 button:hover {
-  background-color: #4a7090;
+  background-color: #4a5dbb;
 }
 
 .translations div {
@@ -320,7 +321,7 @@ input[readonly] {
   padding: 10px 15px; /* Добавляет отступы вокруг текста */
   font-size: 14px; /* Устанавливает размер шрифта текста кнопки */
   border-radius: 20px; /* Применяет закругление углов кнопки */
-  background-color: #7393a7; /* Цвет фона кнопки */
+  background-color: #5c7aea; /* Цвет фона кнопки */
   color: white; /* Цвет текста кнопки */
   border: none; /* Убирает границу кнопки */
   cursor: pointer; /* Изменяет указатель при наведении */
@@ -378,14 +379,48 @@ h2 {
   -webkit-appearance: none; /* Убирает стандартное оформление в Chrome и Safari */
   -moz-appearance: none; /* Убирает стандартное оформление в Firefox */
   appearance: none; /* Убирает стандартное оформление */
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
+
+.select-style-import-csv {
+  display: block;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  padding: 6px;
+  width: auto;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); /* Иконка стрелки */
+  background-repeat: no-repeat;
+  background-position: right 5px top 50%;
+  background-size: 10px 10px;
+  -webkit-appearance: none; /* Убирает стандартное оформление в Chrome и Safari */
+  -moz-appearance: none; /* Убирает стандартное оформление в Firefox */
+  appearance: none; /* Убирает стандартное оформление */
+  padding-right: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.select-style-import-csv:hover {
+  border-color: #007bff; /* Цвет рамки при наведении */
+}
+
+.select-style-import-csv:focus {
+  outline: none;
+  border-color: #007bff; /* Цвет рамки при фокусе */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Тень при фокусе */
+}
+
 .select-style:hover {
-  border-color: #3e5c7f; /* Цвет рамки при наведении */
+  border-color: #007bff; /* Цвет рамки при наведении */
 }
 
 .select-style:focus {
   outline: none;
-  border-color: #3e5c7f; /* Цвет рамки при фокусе */
+  border-color: #007bff; /* Цвет рамки при фокусе */
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Тень при фокусе */
 }
 
@@ -426,6 +461,7 @@ h2 {
 }
 .deck:hover {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Подсветка при наведении */
+  transition: all 0.3s ease;
 }
 .deck .deck-title {
   font-weight: 600; /* Более жирный шрифт для названия колоды */
@@ -552,7 +588,7 @@ h2 {
 }
 
 [contenteditable="true"]:focus {
-  border: 1px solid #7393a7; /* Синий контур для индикации фокуса */
+  border: 1px solid #7489ff; /* Синий контур для индикации фокуса */
   background: #ebf5ff; /* Светло-синий фон */
 }
 
@@ -595,7 +631,7 @@ h2 {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень при наведении для эффекта объема */
 }
 .edit-button {
-  color: #4a90e2; /* Цвет иконки карандаша */
+  color: #7489ff; /* Цвет иконки карандаша */
 }
 
 .delete-button {
@@ -663,6 +699,7 @@ input[type="text"] {
   border-radius: 4px;
   outline: none; /* Убираем стандартный outline */
   box-shadow: none; /* Нет тени в обычном состоянии */
+  transition: all 0.3s ease;
 }
 
 input[type="email"]:focus,
@@ -786,7 +823,7 @@ input[type="text"]:focus {
 }
 
 #preview-table th {
-  background-color: #ced0f1; /* Цвет фона для заголовков таблицы */
+  background-color: #a8a7a7; /* Цвет фона для заголовков таблицы */
   color: white; /* Цвет текста для заголовков таблицы */
 }
 
@@ -796,7 +833,8 @@ input[type="text"]:focus {
 
 #import-button {
   width: auto; /* Автоматическая ширина по содержимому */
-  padding: 5px 10px; /* Пример отступов */
+  padding: 10px; /* Пример отступов */
+  margin-top: 20px;
   /* display: inline-block; */
 }
 
@@ -805,11 +843,12 @@ input[type="text"]:focus {
   padding: 10px 20px;
   cursor: pointer;
   background-color: transparent; /* Цвет фона */
-  color: #333; /* Цвет текста */
+  color: #5c7aea; /* Цвет текста */
   border: none; /* Убрать границу */
   text-align: center; /* Центрировать текст */
   font-size: 16px; /* Размер шрифта для иконки и текста */
   border-radius: 5px; /* Скругление углов */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .button:hover {
@@ -824,8 +863,13 @@ input[type="text"]:focus {
 #file-name {
   display: block; /* или inline-block в зависимости от вашего предпочтения */
   margin-top: 10px; /* отступ сверху, чтобы отделить имя файла от кнопки выбора файла */
+  text-align: center;
 }
 
 #addWordButton {
   width: auto;
+}
+
+.my-form p {
+  text-align: center;
 }
