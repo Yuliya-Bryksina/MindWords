@@ -1576,9 +1576,11 @@ function handleFiles(files) {
       const contents = e.target.result;
       parsedWords = parseCSV(contents); // Парсинг CSV и сохранение в parsedWords
       displayPreview(parsedWords); // Отображение предпросмотра данных
-      displayPreviewContainer(); // Показываем контейнер для предпросмотра
+
+      // Если массив parsedWords не пуст, отображаем кнопку "Импортировать" и выпадающий список
       if (parsedWords.length > 0) {
-        document.getElementById("import-button").disabled = false; // Активируем кнопку
+        document.getElementById("import-button").style.display = "block";
+        document.getElementById("deck-select").style.display = "block";
       }
     };
     reader.readAsText(file);
@@ -1598,6 +1600,10 @@ function handleFileUpload(file) {
     .then((response) => response.json())
     .then((data) => {
       // Обработка ответа от сервера
+
+      // Показываем кнопку "Импортировать" и выпадающий список, если файл успешно обработан
+      document.getElementById("import-button").style.display = "block";
+      document.getElementById("deck-select").style.display = "block";
     })
     .catch((error) => {
       console.error("Ошибка при отправке файла:", error);

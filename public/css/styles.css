@@ -797,7 +797,7 @@ input[type="text"]:focus {
 #import-button {
   width: auto; /* Автоматическая ширина по содержимому */
   padding: 5px 10px; /* Пример отступов */
-  display: inline-block;
+  /* display: inline-block; */
 }
 
 .button {
@@ -824,4 +824,8 @@ input[type="text"]:focus {
 #file-name {
   display: block; /* или inline-block в зависимости от вашего предпочтения */
   margin-top: 10px; /* отступ сверху, чтобы отделить имя файла от кнопки выбора файла */
+}
+
+#addWordButton {
+  width: auto;
 }
