@@ -168,30 +168,36 @@ function addWord() {
 
 function loadWord(word, context) {
   let modal, studyWord, wordInEnglish, wordTranscription, wordDefinition;
-  let knowWordButton, learnWordButton;
+  let againButton, hardButton, goodButton, easyButton;
 
-  // Получаем элементы для контекста "newWord"
+  // Получаем элементы для контекста "newWord" или "reviewWord"
   if (context === "newWord") {
     modal = document.getElementById("studyModal");
     studyWord = document.getElementById("studyWord");
     wordInEnglish = document.getElementById("wordInEnglish");
     wordTranscription = document.getElementById("wordTranscription");
     wordDefinition = document.getElementById("wordDefinition");
-    knowWordButton = document.getElementById("knowWordButton");
-    learnWordButton = document.getElementById("learnWordButton");
-  }
-  // Получаем элементы для контекста "reviewWord"
-  else if (context === "reviewWord") {
+
+    // Получаем ссылки на новые кнопки для контекста "newWord"
+    againButton = document.getElementById("againWordButton");
+    hardButton = document.getElementById("hardWordButton");
+    goodButton = document.getElementById("goodWordButton");
+    easyButton = document.getElementById("easyWordButton");
+  } else if (context === "reviewWord") {
     modal = document.getElementById("wordsToReviewModal");
     studyWord = document.getElementById("reviewStudyWord");
     wordInEnglish = document.getElementById("reviewWordInEnglish");
     wordTranscription = document.getElementById("reviewWordTranscription");
     wordDefinition = document.getElementById("reviewWordDefinition");
-    knowWordButton = document.getElementById("knowReviewWordButton");
-    learnWordButton = document.getElementById("learnReviewWordButton");
+
+    // Получаем ссылки на новые кнопки для контекста "reviewWord"
+    againButton = document.getElementById("againReviewWordButton");
+    hardButton = document.getElementById("hardReviewWordButton");
+    goodButton = document.getElementById("goodReviewWordButton");
+    easyButton = document.getElementById("easyReviewWordButton");
   }
 
-  // Проверяем, существуют ли элементы, прежде чем изменять их свойства
+  // Обновляем содержимое модального окна
   if (studyWord) studyWord.textContent = word.translation;
   if (wordInEnglish) wordInEnglish.textContent = word.term;
   if (wordTranscription) wordTranscription.textContent = word.transcription;
@@ -206,7 +212,7 @@ function loadWord(word, context) {
     wordDefinition.classList.remove("visible");
   }
 
-  // Проверяем, существует ли модальное окно, прежде чем изменять его стиль
+  // Показываем модальное окно
   if (modal) modal.style.display = "block";
 
   // Показываем кнопку "Показать определение", если это необходимо
@@ -215,19 +221,52 @@ function loadWord(word, context) {
   const showDefinitionElem = document.getElementById(showDefinitionButton);
   if (showDefinitionElem) showDefinitionElem.style.display = "block";
 
-  // Добавляем обработчики событий, если кнопки существуют
-  if (knowWordButton) {
-    knowWordButton.removeEventListener("click", handleKnowWordClick);
-    knowWordButton.addEventListener("click", handleKnowWordClick);
-    knowWordButton.dataset.wordId = word._id;
+  // Назначаем обработчики событий для новых кнопок
+  if (againButton) {
+    againButton.removeEventListener("click", handleAgainWordClick);
+    againButton.addEventListener("click", handleAgainWordClick);
+    againButton.dataset.wordId = word._id;
   }
 
-  if (learnWordButton) {
-    learnWordButton.removeEventListener("click", handleLearnWordClick);
-    learnWordButton.addEventListener("click", handleLearnWordClick);
-    learnWordButton.dataset.wordId = word._id;
+  if (hardButton) {
+    hardButton.removeEventListener("click", handleHardWordClick);
+    hardButton.addEventListener("click", handleHardWordClick);
+    hardButton.dataset.wordId = word._id;
   }
+
+  if (goodButton) {
+    goodButton.removeEventListener("click", handleGoodWordClick);
+    goodButton.addEventListener("click", handleGoodWordClick);
+    goodButton.dataset.wordId = word._id;
+  }
+
+  if (easyButton) {
+    easyButton.removeEventListener("click", handleEasyWordClick);
+    easyButton.addEventListener("click", handleEasyWordClick);
+    easyButton.dataset.wordId = word._id;
+  }
+
+  // assignButtonHandlers(word._id);
 }
+
+// function assignButtonHandlers(wordId) {
+//   // Находим кнопки в DOM
+//   const againButton = document.getElementById("againWordButton");
+//   const hardButton = document.getElementById("hardWordButton");
+//   const goodButton = document.getElementById("goodWordButton");
+//   const easyButton = document.getElementById("easyWordButton");
+
+//   // Назначаем обработчики событий
+//   if (againButton) againButton.onclick = handleAgainWordClick;
+//   if (hardButton) hardButton.onclick = handleHardWordClick;
+//   if (goodButton) goodButton.onclick = handleGoodWordClick;
+//   if (easyButton) easyButton.onclick = handleEasyWordClick;
+
+//   // Устанавливаем dataset.wordId для каждой кнопки
+//   [againButton, hardButton, goodButton, easyButton].forEach((button) => {
+//     if (button) button.dataset.wordId = wordId;
+//   });
+// }
 
 function initializeProgressBar(wordCount, progressBarId) {
   const progressBar = document.getElementById(progressBarId);
@@ -251,13 +290,13 @@ function updateProgressBar(index, status) {
   }
 }
 // Функция для отправки статуса слова на сервер
-function updateWordStatus(wordId, knowsWord) {
+function updateWordStatus(wordId, qualityResponse) {
   return fetch("/update-word-status", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ wordId, knowsWord }),
+    body: JSON.stringify({ wordId, qualityResponse }),
   })
     .then((response) => {
       if (!response.ok) {
@@ -320,55 +359,111 @@ function updateProgressBar(index, status) {
 
 let learnedWordsCount = 0; // Счетчик изученных слов
 
-function handleKnowWordClick() {
+// function handleKnowWordClick() {
+//   const wordId = this.dataset.wordId;
+
+//   updateWordStatus(wordId, true).then(() => {
+//     // Удаляем текущее слово из списка, так как оно уже изучено
+//     wordList = wordList.filter((word) => word._id !== wordId);
+
+//     // Обновляем прогресс-бар для изученного слова
+//     updateProgressBar(learnedWordsCount, "изучено");
+//     learnedWordsCount++;
+
+//     if (wordList.length === 0) {
+//       handleLastWord();
+//     } else {
+//       // Переходим к следующему слову в списке
+//       currentWordIndex = (currentWordIndex + 1) % wordList.length;
+//       loadWord(wordList[currentWordIndex], currentContext);
+//     }
+//   });
+// }
+
+// function handleLearnWordClick() {
+//   const wordId = this.dataset.wordId;
+
+//   updateWordStatus(wordId, false).then(() => {
+//     const wordToRelearnIndex = wordList.findIndex(
+//       (word) => word._id === wordId
+//     );
+
+//     if (wordToRelearnIndex !== -1) {
+//       const [wordToRelearn] = wordList.splice(wordToRelearnIndex, 1);
+//       wordList.push(wordToRelearn);
+//     }
+
+//     // Переходим к следующему слову, не обновляя прогресс-бар
+//     currentWordIndex = (currentWordIndex + 1) % wordList.length;
+//     loadWord(wordList[currentWordIndex], currentContext);
+//   });
+// }
+
+// function addEventListeners(button, wordId, knowsWord) {
+//   // Удаляем существующие обработчики событий
+//   button.removeEventListener("click", handleKnowWordClick);
+//   button.removeEventListener("click", handleLearnWordClick);
+
+//   // Добавляем новый обработчик событий
+//   const handler = knowsWord ? handleKnowWordClick : handleLearnWordClick;
+//   button.addEventListener("click", handler);
+//   button.dataset.wordId = wordId; // Устанавливаем wordId как данные элемента для доступа в обработчике
+// }
+
+function handleAgainWordClick() {
   const wordId = this.dataset.wordId;
-
-  updateWordStatus(wordId, true).then(() => {
-    // Удаляем текущее слово из списка, так как оно уже изучено
-    wordList = wordList.filter((word) => word._id !== wordId);
-
-    // Обновляем прогресс-бар для изученного слова
-    updateProgressBar(learnedWordsCount, "изучено");
-    learnedWordsCount++;
-
-    if (wordList.length === 0) {
-      handleLastWord();
-    } else {
-      // Переходим к следующему слову в списке
-      currentWordIndex = (currentWordIndex + 1) % wordList.length;
-      loadWord(wordList[currentWordIndex], currentContext);
-    }
+  updateWordStatus(wordId, 0).then(() => {
+    moveToWordEnd(wordId);
+    loadNextWord();
   });
 }
 
-function handleLearnWordClick() {
+function handleHardWordClick() {
   const wordId = this.dataset.wordId;
-
-  updateWordStatus(wordId, false).then(() => {
-    const wordToRelearnIndex = wordList.findIndex(
-      (word) => word._id === wordId
-    );
-
-    if (wordToRelearnIndex !== -1) {
-      const [wordToRelearn] = wordList.splice(wordToRelearnIndex, 1);
-      wordList.push(wordToRelearn);
-    }
-
-    // Переходим к следующему слову, не обновляя прогресс-бар
-    currentWordIndex = (currentWordIndex + 1) % wordList.length;
-    loadWord(wordList[currentWordIndex], currentContext);
+  updateWordStatus(wordId, 1).then(() => {
+    moveToWordEnd(wordId);
+    loadNextWord();
   });
 }
 
-function addEventListeners(button, wordId, knowsWord) {
-  // Удаляем существующие обработчики событий
-  button.removeEventListener("click", handleKnowWordClick);
-  button.removeEventListener("click", handleLearnWordClick);
+function handleGoodWordClick() {
+  const wordId = this.dataset.wordId;
+  updateWordStatus(wordId, 3).then(() => {
+    markWordAsLearned(wordId);
+  });
+}
 
-  // Добавляем новый обработчик событий
-  const handler = knowsWord ? handleKnowWordClick : handleLearnWordClick;
-  button.addEventListener("click", handler);
-  button.dataset.wordId = wordId; // Устанавливаем wordId как данные элемента для доступа в обработчике
+function handleEasyWordClick() {
+  const wordId = this.dataset.wordId;
+  updateWordStatus(wordId, 5).then(() => {
+    markWordAsLearned(wordId);
+  });
+}
+
+function moveToWordEnd(wordId) {
+  const index = wordList.findIndex((word) => word._id === wordId);
+  if (index !== -1) {
+    const wordToMove = wordList.splice(index, 1)[0];
+    wordList.push(wordToMove);
+  }
+  // Убираем обновление прогресс-бара отсюда
+  loadNextWord();
+}
+
+function markWordAsLearned(wordId) {
+  wordList = wordList.filter((word) => word._id !== wordId);
+  updateProgressBar(learnedWordsCount, "изучено");
+  learnedWordsCount++; // Увеличиваем счетчик изученных слов
+  loadNextWord();
+}
+
+function loadNextWord() {
+  if (wordList.length === 0) {
+    handleLastWord();
+    return;
+  }
+  currentWordIndex = (currentWordIndex + 1) % wordList.length;
+  loadWord(wordList[currentWordIndex], currentContext);
 }
 
 function initializeUserSession() {

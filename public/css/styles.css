@@ -229,7 +229,7 @@ input[readonly] {
 
 .modal-footer button {
   border-radius: 20px;
-  margin-right: 25px;
+  margin-right: 20px;
 }
 .modal-footer button:last-child {
   margin-right: 0; /* Убираем отступ справа для последней кнопки */

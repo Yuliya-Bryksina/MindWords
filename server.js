@@ -167,50 +167,60 @@ app.get("/get-word-definition", isAuthenticated, async (req, res) => {
 });
 
 app.post("/update-word-status", isAuthenticated, async (req, res) => {
-  const { wordId, knowsWord } = req.body;
+  const { wordId, qualityResponse } = req.body; // Используем только qualityResponse
   const userId = req.session.userId;
 
   try {
-    await updateWord(wordId, knowsWord, userId); // Обновляем с учетом userId
+    await updateWord(wordId, qualityResponse, userId);
     res.send({ message: "Word status updated successfully" });
   } catch (error) {
     res.status(500).send(error);
   }
 });
 
-async function updateWord(wordId, knowsWord, userId) {
+async function updateWord(wordId, qualityResponse, userId) {
   try {
-    // Поиск слова с учетом userId для обеспечения безопасности
     const word = await Word.findOne({ _id: wordId, userId: userId });
 
     if (!word) {
       throw new Error("Word not found or does not belong to the user");
     }
+    console.log(
+      `Updating efactor for wordId: ${wordId}, current efactor: ${word.efactor}, qualityResponse: ${qualityResponse}`
+    );
 
-    // Теперь логика обновления слова
-    if (knowsWord) {
-      // Логика для ситуации, когда пользователь знает слово
+    // Логируем новый efactor после обновления
+    console.log(
+      `After update: wordId: ${wordId}, new efactor: ${word.efactor}`
+    );
+
+    // Логика для "Снова" и "Трудно", если пользователь не помнит слово
+    if (qualityResponse <= 1) {
+      // Если "Снова" или "Трудно"
+      word.repetitionLevel = 0;
+      word.reviewInterval = 1; // Повторить завтра
+      word.studied = false; // Слово еще не изучено
+    } else {
+      // Если пользователь помнит слово ("Хорошо" или "Легко")
       word.repetitionLevel += 1;
-      word.efactor = calculateEFactor(word.efactor, 5);
+      word.efactor = calculateEFactor(word.efactor, qualityResponse);
       word.reviewInterval = calculateInterval(
         word.reviewInterval,
         word.efactor,
         word.repetitionLevel
       );
-      word.nextReviewDate = new Date(
-        Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
-      );
-      word.studied = true;
-    } else {
-      // Логика для ситуации, когда пользователь не знает слово
-      word.repetitionLevel = 0;
-      word.reviewInterval = 1;
-      word.nextReviewDate = new Date();
-      // Поле studied не изменяется
+      word.studied = true; // Слово изучено и переходит в фазу повторения
     }
 
+    // Установка следующей даты повторения
+    word.nextReviewDate = new Date(
+      Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
+    );
+
     await word.save();
-    console.log("Word saved successfully.");
+    console.log(
+      `Word updated successfully with quality response: ${qualityResponse}`
+    );
   } catch (error) {
     console.error("Error in updateWord:", error);
     throw error;
@@ -427,27 +437,6 @@ app.post("/update-deck/:deckId", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
-// Похоже, что это не используется
-// async function getLastUpdatedDateForDecks() {
-//   const decks = await Deck.find(); // Получаем все колоды
-
-//   const lastUpdatedDates = await Promise.all(
-//     decks.map(async (deck) => {
-//       // Находим последнее обновленное слово в колоде
-//       const lastWordUpdate = await Word.findOne({ _id: { $in: deck.words } })
-//         .sort({ updatedAt: -1 }) // Сортируем слова по дате обновления
-//         .select("updatedAt -_id"); // Выбираем только нужное поле
-
-//       return {
-//         deckId: deck._id,
-//         lastUpdate: lastWordUpdate ? lastWordUpdate.updatedAt : deck.createdAt,
-//       };
-//     })
-//   );
-
-//   return lastUpdatedDates;
-// }
 
 app.get("/decks/last-updated", isAuthenticated, async (req, res) => {
   try {
@@ -717,12 +706,10 @@ app.post("/import-words", isAuthenticated, async (req, res) => {
     deck.words.push(...insertedWords.map((word) => word._id));
     await deck.save();
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Слова успешно импортированы в колоду.",
-      });
+    res.status(200).json({
+      success: true,
+      message: "Слова успешно импортированы в колоду.",
+    });
   } catch (error) {
     console.error("Ошибка при импорте слов:", error);
     res
