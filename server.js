@@ -116,7 +116,11 @@ app.get("/new-words-count", isAuthenticated, async (req, res) => {
 app.get("/api/new-words", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
-    const newWords = await Word.find({ studied: false, userId: userId });
+    const newWords = await Word.find({ studied: false, userId: userId })
+      .select(
+        "term transcription translation nextReviewDate reviewInterval repetitionLevel efactor learningStep inLearningMode"
+      ) // Добавляем выборку нужных полей
+      .exec(); // Завершаем запрос
     res.json(newWords);
   } catch (error) {
     res.status(500).send(error.message);
@@ -130,7 +134,11 @@ app.get("/api/words-to-review", isAuthenticated, async (req, res) => {
       studied: true,
       nextReviewDate: { $lte: new Date() },
       userId: userId,
-    });
+    })
+      .select(
+        "term transcription translation nextReviewDate reviewInterval repetitionLevel efactor learningStep inLearningMode"
+      ) // Добавляем выборку нужных полей
+      .exec(); // Завершаем запрос
     res.json(wordsToReview);
   } catch (error) {
     res.status(500).send(error.message);
@@ -167,6 +175,7 @@ app.get("/get-word-definition", isAuthenticated, async (req, res) => {
 });
 
 app.post("/update-word-status", isAuthenticated, async (req, res) => {
+  console.log("update-word-status request:", req.body); // Добавить это логирование
   const { wordId, qualityResponse } = req.body; // Используем только qualityResponse
   const userId = req.session.userId;
 
@@ -178,51 +187,81 @@ app.post("/update-word-status", isAuthenticated, async (req, res) => {
   }
 });
 
+// Определение шагов изучения
+
+const learningSteps = [1, 10]; // Убедитесь, что этот массив доступен внутри функции
+
 async function updateWord(wordId, qualityResponse, userId) {
   try {
     const word = await Word.findOne({ _id: wordId, userId: userId });
-
     if (!word) {
       throw new Error("Word not found or does not belong to the user");
     }
-    console.log(
-      `Updating efactor for wordId: ${wordId}, current efactor: ${word.efactor}, qualityResponse: ${qualityResponse}`
-    );
 
-    // Логируем новый efactor после обновления
-    console.log(
-      `After update: wordId: ${wordId}, new efactor: ${word.efactor}`
-    );
+    console.log("Server: Current word state before any updates:", word);
 
-    // Логика для "Снова" и "Трудно", если пользователь не помнит слово
-    if (qualityResponse <= 1) {
-      // Если "Снова" или "Трудно"
-      word.repetitionLevel = 0;
-      word.reviewInterval = 1; // Повторить завтра
-      word.studied = false; // Слово еще не изучено
-    } else {
-      // Если пользователь помнит слово ("Хорошо" или "Легко")
-      word.repetitionLevel += 1;
-      word.efactor = calculateEFactor(word.efactor, qualityResponse);
-      word.reviewInterval = calculateInterval(
-        word.reviewInterval,
-        word.efactor,
-        word.repetitionLevel
+    // Логика для слов в режиме обучения
+    if (word.inLearningMode) {
+      console.log(
+        `Server: Word is in learning mode. Current learning step: ${word.learningStep}`
       );
-      word.studied = true; // Слово изучено и переходит в фазу повторения
+
+      if (qualityResponse === 0) {
+        word.learningStep = 0;
+      } else {
+        word.learningStep += 1;
+
+        if (word.learningStep >= learningSteps.length) {
+          word.inLearningMode = false;
+          word.studied = true;
+          word.repetitionLevel = 1;
+          word.efactor = 2.5;
+          word.reviewInterval = 1;
+          word.nextReviewDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        } else {
+          word.nextReviewDate = new Date(
+            Date.now() + learningSteps[word.learningStep] * 60 * 1000
+          );
+        }
+      }
+    } else {
+      // Логика для слов в режиме повторения
+      if (qualityResponse === 0) {
+        word.inLearningMode = true;
+        word.learningStep = 0;
+        word.repetitionLevel = 0;
+        word.reviewInterval = 1;
+      } else {
+        word.repetitionLevel += 1;
+        word.efactor = calculateEFactor(word.efactor, qualityResponse);
+        word.reviewInterval = calculateInterval(
+          word.reviewInterval,
+          word.efactor,
+          word.repetitionLevel
+        );
+      }
+      word.nextReviewDate = new Date(
+        Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
+      );
     }
 
-    // Установка следующей даты повторения
-    word.nextReviewDate = new Date(
-      Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
-    );
+    console.log("Calculated nextReviewDate:", word.nextReviewDate);
 
-    await word.save();
-    console.log(
-      `Word updated successfully with quality response: ${qualityResponse}`
-    );
+    if (isNaN(word.nextReviewDate.getTime())) {
+      console.error("Invalid nextReviewDate calculated:", word.nextReviewDate);
+      word.nextReviewDate = new Date();
+    }
+
+    console.log("Server: Word state before saving:", word);
+
+    try {
+      await word.save();
+      console.log(`Server: Word with wordId: ${wordId} updated successfully.`);
+    } catch (error) {
+      console.error(`Server: Error saving word with wordId: ${wordId}:`, error);
+    }
   } catch (error) {
-    console.error("Error in updateWord:", error);
+    console.error(`Server: Error updating word with wordId: ${wordId}:`, error);
     throw error;
   }
 }

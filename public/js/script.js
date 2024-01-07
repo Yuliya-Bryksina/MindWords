@@ -167,6 +167,7 @@ function addWord() {
 }
 
 function loadWord(word, context) {
+  console.log("loadWord called for", word.term);
   let modal, studyWord, wordInEnglish, wordTranscription, wordDefinition;
   let againButton, hardButton, goodButton, easyButton;
 
@@ -246,27 +247,10 @@ function loadWord(word, context) {
     easyButton.dataset.wordId = word._id;
   }
 
-  // assignButtonHandlers(word._id);
+  // Вызываем функцию обновления UI для отображения прогнозируемых дат следующего повторения
+  updateNextReviewDateDisplay(word);
+  console.log("loadWord finished for", word.term);
 }
-
-// function assignButtonHandlers(wordId) {
-//   // Находим кнопки в DOM
-//   const againButton = document.getElementById("againWordButton");
-//   const hardButton = document.getElementById("hardWordButton");
-//   const goodButton = document.getElementById("goodWordButton");
-//   const easyButton = document.getElementById("easyWordButton");
-
-//   // Назначаем обработчики событий
-//   if (againButton) againButton.onclick = handleAgainWordClick;
-//   if (hardButton) hardButton.onclick = handleHardWordClick;
-//   if (goodButton) goodButton.onclick = handleGoodWordClick;
-//   if (easyButton) easyButton.onclick = handleEasyWordClick;
-
-//   // Устанавливаем dataset.wordId для каждой кнопки
-//   [againButton, hardButton, goodButton, easyButton].forEach((button) => {
-//     if (button) button.dataset.wordId = wordId;
-//   });
-// }
 
 function initializeProgressBar(wordCount, progressBarId) {
   const progressBar = document.getElementById(progressBarId);
@@ -348,67 +332,7 @@ function openWordsToReviewModal() {
     .catch((error) => console.error("Ошибка: ", error));
 }
 
-function updateProgressBar(index, status) {
-  const progressBarItems = document.querySelectorAll(".progress-item");
-  if (progressBarItems.length > index) {
-    if (status === "изучено") {
-      progressBarItems[index].classList.add("learned"); // Добавляем класс для изученного слова
-    } // Не делаем ничего для неизученного слова
-  }
-}
-
 let learnedWordsCount = 0; // Счетчик изученных слов
-
-// function handleKnowWordClick() {
-//   const wordId = this.dataset.wordId;
-
-//   updateWordStatus(wordId, true).then(() => {
-//     // Удаляем текущее слово из списка, так как оно уже изучено
-//     wordList = wordList.filter((word) => word._id !== wordId);
-
-//     // Обновляем прогресс-бар для изученного слова
-//     updateProgressBar(learnedWordsCount, "изучено");
-//     learnedWordsCount++;
-
-//     if (wordList.length === 0) {
-//       handleLastWord();
-//     } else {
-//       // Переходим к следующему слову в списке
-//       currentWordIndex = (currentWordIndex + 1) % wordList.length;
-//       loadWord(wordList[currentWordIndex], currentContext);
-//     }
-//   });
-// }
-
-// function handleLearnWordClick() {
-//   const wordId = this.dataset.wordId;
-
-//   updateWordStatus(wordId, false).then(() => {
-//     const wordToRelearnIndex = wordList.findIndex(
-//       (word) => word._id === wordId
-//     );
-
-//     if (wordToRelearnIndex !== -1) {
-//       const [wordToRelearn] = wordList.splice(wordToRelearnIndex, 1);
-//       wordList.push(wordToRelearn);
-//     }
-
-//     // Переходим к следующему слову, не обновляя прогресс-бар
-//     currentWordIndex = (currentWordIndex + 1) % wordList.length;
-//     loadWord(wordList[currentWordIndex], currentContext);
-//   });
-// }
-
-// function addEventListeners(button, wordId, knowsWord) {
-//   // Удаляем существующие обработчики событий
-//   button.removeEventListener("click", handleKnowWordClick);
-//   button.removeEventListener("click", handleLearnWordClick);
-
-//   // Добавляем новый обработчик событий
-//   const handler = knowsWord ? handleKnowWordClick : handleLearnWordClick;
-//   button.addEventListener("click", handler);
-//   button.dataset.wordId = wordId; // Устанавливаем wordId как данные элемента для доступа в обработчике
-// }
 
 function handleAgainWordClick() {
   const wordId = this.dataset.wordId;
@@ -445,9 +369,136 @@ function moveToWordEnd(wordId) {
   if (index !== -1) {
     const wordToMove = wordList.splice(index, 1)[0];
     wordList.push(wordToMove);
+
+    // Если перемещаемое слово было текущим, обновляем currentWordIndex
+    if (currentWordIndex === index) {
+      currentWordIndex = wordList.length - 1;
+    } else if (currentWordIndex > index) {
+      // Если перемещаемое слово было перед текущим, уменьшаем currentWordIndex
+      currentWordIndex--;
+    }
   }
-  // Убираем обновление прогресс-бара отсюда
-  loadNextWord();
+}
+
+function calculateEFactor(efactor, qualityResponse) {
+  // Функция для расчета E-фактора
+  return Math.max(
+    1.3,
+    efactor +
+      (0.1 - (5 - qualityResponse) * (0.08 + (5 - qualityResponse) * 0.02))
+  );
+}
+
+function calculateInterval(previousInterval, efactor, repetitionCount) {
+  // Функция для расчета интервала
+  if (repetitionCount === 1) {
+    return 1;
+  } else if (repetitionCount === 2) {
+    return 6;
+  } else {
+    return Math.round(previousInterval * efactor);
+  }
+}
+
+const learningSteps = [1, 10]; // Шаги в минутах
+
+function simulateNextReviewDate(word, qualityResponse) {
+  let simulatedWord = { ...word }; // Создаем копию слова для имитации изменений
+
+  if (simulatedWord.inLearningMode) {
+    // Логика для изучаемых слов
+    if (qualityResponse === 0) {
+      simulatedWord.learningStep = 0;
+    } else {
+      if (simulatedWord.learningStep < learningSteps.length - 1) {
+        simulatedWord.learningStep += 1;
+      }
+      if (simulatedWord.learningStep >= learningSteps.length - 1) {
+        simulatedWord.repetitionLevel = 1;
+        simulatedWord.efactor = 2.5;
+        simulatedWord.reviewInterval = 1;
+        simulatedWord.inLearningMode = false;
+      }
+    }
+    const stepInterval = learningSteps[simulatedWord.learningStep] || 1;
+    console.log({
+      step: simulatedWord.learningStep,
+      interval: learningSteps[simulatedWord.learningStep],
+      reviewInterval: simulatedWord.reviewInterval,
+      efactor: simulatedWord.efactor,
+      repetitionLevel: simulatedWord.repetitionLevel,
+    });
+
+    simulatedWord.nextReviewDate = new Date(
+      Date.now() + stepInterval * 60 * 1000
+    );
+  } else {
+    // Логика для повторяемых слов
+    if (qualityResponse === 0) {
+      simulatedWord.repetitionLevel = 0;
+      simulatedWord.reviewInterval = 1;
+      simulatedWord.inLearningMode = true;
+      simulatedWord.learningStep = 0;
+    } else {
+      simulatedWord.repetitionLevel += 1;
+      simulatedWord.efactor = calculateEFactor(
+        simulatedWord.efactor,
+        qualityResponse
+      );
+      simulatedWord.reviewInterval = calculateInterval(
+        simulatedWord.reviewInterval,
+        simulatedWord.efactor,
+        simulatedWord.repetitionLevel
+      );
+    }
+    console.log({
+      step: simulatedWord.learningStep,
+      interval: learningSteps[simulatedWord.learningStep],
+      reviewInterval: simulatedWord.reviewInterval,
+      efactor: simulatedWord.efactor,
+      repetitionLevel: simulatedWord.repetitionLevel,
+    });
+
+    simulatedWord.nextReviewDate = new Date(
+      Date.now() + simulatedWord.reviewInterval * 24 * 60 * 60 * 1000
+    );
+  }
+
+  return simulatedWord.nextReviewDate;
+}
+
+function updateNextReviewDateDisplay(word) {
+  const nextReviewDates = {
+    again: simulateNextReviewDate(word, 0),
+    hard: simulateNextReviewDate(word, 1),
+    good: simulateNextReviewDate(word, 3),
+    easy: simulateNextReviewDate(word, 5),
+  };
+
+  // Предполагаем, что у вас есть элементы на странице для отображения дат
+  document.getElementById("againNextReviewDate").textContent = formatDate(
+    nextReviewDates.again
+  );
+  document.getElementById("hardNextReviewDate").textContent = formatDate(
+    nextReviewDates.hard
+  );
+  document.getElementById("goodNextReviewDate").textContent = formatDate(
+    nextReviewDates.good
+  );
+  document.getElementById("easyNextReviewDate").textContent = formatDate(
+    nextReviewDates.easy
+  );
+}
+
+function formatDate(date) {
+  // Проверяем, что аргумент date является объектом Date и он содержит валидную дату
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    // Форматируем дату для отображения
+    return date.toLocaleDateString(); // Или любой другой формат, который вам нравится
+  } else {
+    // Если дата невалидна, возвращаем запасное значение
+    return "Дата не определена";
+  }
 }
 
 function markWordAsLearned(wordId) {
@@ -458,12 +509,20 @@ function markWordAsLearned(wordId) {
 }
 
 function loadNextWord() {
-  if (wordList.length === 0) {
+  console.log(
+    "Loading next word. Current index before update:",
+    currentWordIndex
+  );
+
+  // Если достигли конца списка, вызываем handleLastWord
+  if (currentWordIndex >= wordList.length - 1) {
     handleLastWord();
-    return;
+  } else {
+    // Иначе переходим к следующему слову
+    currentWordIndex = (currentWordIndex + 1) % wordList.length;
+    console.log("Updated currentWordIndex:", currentWordIndex);
+    loadWord(wordList[currentWordIndex], currentContext);
   }
-  currentWordIndex = (currentWordIndex + 1) % wordList.length;
-  loadWord(wordList[currentWordIndex], currentContext);
 }
 
 function initializeUserSession() {
