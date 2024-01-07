@@ -25,20 +25,34 @@ function updateDailyTasks() {
   fetch("/daily-tasks")
     .then((response) => response.json())
     .then((data) => {
+      const now = new Date();
+
+      // Фильтруем новые слова
+      const newWordsCount = data.newWords.filter((word) => {
+        const reviewDate = new Date(word.nextReviewDate);
+        return reviewDate <= now;
+      }).length;
+
+      // Фильтруем слова для повторения
+      const wordsToReviewCount = data.wordsToReview.filter((word) => {
+        const reviewDate = new Date(word.nextReviewDate);
+        return reviewDate <= now;
+      }).length;
+
       const newWordsCountElement = document.getElementById("newWordsCount");
       if (newWordsCountElement) {
-        newWordsCountElement.textContent = `${data.newWords} из 10`;
+        newWordsCountElement.textContent = `${newWordsCount} из 10`;
       }
 
       const wordsToReviewCountElement =
         document.getElementById("wordsToReviewCount");
       if (wordsToReviewCountElement) {
-        wordsToReviewCountElement.textContent = data.wordsToReview;
+        wordsToReviewCountElement.textContent = wordsToReviewCount;
       }
     })
-    .catch((error) =>
-      console.error("Ошибка при получении ежедневных задач: ", error)
-    );
+    .catch((error) => {
+      console.error("Ошибка при получении ежедневных задач: ", error);
+    });
 }
 
 function updateNewWordsCount() {

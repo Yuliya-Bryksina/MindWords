@@ -74,16 +74,24 @@ app.post("/words", isAuthenticated, async (req, res) => {
 app.get("/daily-tasks", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
-    const newWordsCount = await Word.countDocuments({
+
+    // Получаем список новых слов
+    const newWords = await Word.find({
       studied: false,
       userId: userId,
-    });
-    const wordsToReviewCount = await Word.countDocuments({
+    }).select("term nextReviewDate");
+
+    // Получаем список слов для повторения
+    const wordsToReview = await Word.find({
       studied: true,
       nextReviewDate: { $lte: Date.now() },
       userId: userId,
+    }).select("term nextReviewDate");
+
+    res.json({
+      newWords: newWords,
+      wordsToReview: wordsToReview,
     });
-    res.json({ newWords: newWordsCount, wordsToReview: wordsToReviewCount });
   } catch (error) {
     res.status(500).send(error.message);
   }
