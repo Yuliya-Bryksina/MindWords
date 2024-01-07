@@ -22,26 +22,32 @@ function showNotification(message) {
 }
 
 function updateDailyTasks() {
+  const dailyLimit = getDailyNewWordLimit(); // Получаем лимит из localStorage или значение по умолчанию
+
   fetch("/daily-tasks")
     .then((response) => response.json())
     .then((data) => {
       const now = new Date();
 
-      // Фильтруем новые слова
-      const newWordsCount = data.newWords.filter((word) => {
+      // Определяем количество новых слов, готовых к изучению
+      const newWordsReady = data.newWords.filter((word) => {
         const reviewDate = new Date(word.nextReviewDate);
         return reviewDate <= now;
       }).length;
 
-      // Фильтруем слова для повторения
+      // Ограничиваем количество новых слов на основе лимита пользователя
+      const newWordsCount = Math.min(newWordsReady, parseInt(dailyLimit));
+
+      // Определяем количество слов для повторения
       const wordsToReviewCount = data.wordsToReview.filter((word) => {
         const reviewDate = new Date(word.nextReviewDate);
         return reviewDate <= now;
       }).length;
 
+      // Обновляем отображение на странице
       const newWordsCountElement = document.getElementById("newWordsCount");
       if (newWordsCountElement) {
-        newWordsCountElement.textContent = `${newWordsCount} из 10`;
+        newWordsCountElement.textContent = `${newWordsCount} из ${dailyLimit}`;
       }
 
       const wordsToReviewCountElement =
@@ -1787,6 +1793,7 @@ document.addEventListener("DOMContentLoaded", function () {
       handleFiles(event.target.files); // Обработка файлов для отображения
       updateFileName(event); // Обновление имени файла для отображения
     });
+  initializeDailyNewWordLimit();
 });
 
 function preventDefaults(e) {
@@ -1840,3 +1847,69 @@ function displayPreviewContainer() {
   dropArea.querySelector("p").textContent =
     "Файл загружен. Проверьте предпросмотр перед импортом."; // Обновляем подсказку
 }
+
+function saveDailyNewWordLimit(limit) {
+  localStorage.setItem("dailyNewWordLimit", limit);
+}
+
+function getDailyNewWordLimit() {
+  return localStorage.getItem("dailyNewWordLimit") || "10"; // Значение по умолчанию - 10
+}
+
+// Функция для открытия модального окна изменения лимита
+function openEditLimitModal(event) {
+  event.stopPropagation(); // Предотвращаем всплытие события, чтобы не открыть модальное окно новых слов
+  document.getElementById("editLimitModal").style.display = "block";
+}
+
+// Функция для закрытия любого модального окна
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = "none";
+}
+
+// Функция для установки нового лимита, вызывается в ответ на действие пользователя
+function setDailyNewWordLimit(limit) {
+  // Проверяем и обновляем лимит
+  localStorage.setItem("dailyNewWordLimit", limit);
+  const dailyNewWordLimitElement = document.getElementById("dailyNewWordLimit");
+  if (dailyNewWordLimitElement) {
+    dailyNewWordLimitElement.textContent = limit;
+  }
+  closeModal("editLimitModal"); // Закрываем модальное окно
+  updateDailyTasks(); // Обновляем задачи после изменения лимита
+}
+// Функция для закрытия модального окна по клику вне его
+window.onclick = function (event) {
+  if (event.target.classList.contains("modal-edit-limit")) {
+    closeModal(event.target.id);
+  }
+};
+
+// Функция для инициализации лимита новых слов
+function initializeDailyNewWordLimit() {
+  const dailyLimit = getDailyNewWordLimit(); // Используем уже существующую функцию
+  const dailyNewWordLimitElement = document.getElementById("dailyNewWordLimit");
+  if (dailyNewWordLimitElement) {
+    dailyNewWordLimitElement.textContent = dailyLimit;
+  }
+}
+
+function focusInput() {
+  var input = document.getElementById("customLimit");
+  var pencilIcon = document.querySelector(".fa-pencil");
+
+  // При фокусе на поле ввода скрываем иконку карандаша
+  input.addEventListener("focus", function () {
+    pencilIcon.style.display = "none";
+  });
+
+  // Когда поле ввода теряет фокус, показываем иконку карандаша, если поле пустое
+  input.addEventListener("blur", function () {
+    if (input.value === "") {
+      pencilIcon.style.display = "block";
+    }
+  });
+}
+
+// Вызываем функцию при загрузке страницы
+document.addEventListener("DOMContentLoaded", focusInput);

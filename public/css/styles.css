@@ -873,3 +873,116 @@ input[type="text"]:focus {
 .my-form p {
   text-align: center;
 }
+
+#editLimitModal .modal-content.edit-limit-modal {
+  background-color: #fcf8f8; /* Фон модального окна */
+  width: fit-content; /* Адаптируйте ширину к контенту */
+  min-width: 250px; /* Минимальная ширина модального окна */
+  max-width: 300px; /* Максимальная ширина модального окна */
+  height: auto; /* Высота по содержимому */
+  margin: 5% auto; /* Расположение по центру экрана по вертикали и горизонтали */
+  padding: 20px;
+  border-radius: 15px; /* Закругление углов */
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Тень для модального окна */
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Структура колонки для внутренних элементов */
+  cursor: default;
+  justify-content: space-between;
+}
+
+#editLimitModal .modal {
+  display: none; /* По умолчанию модальное окно скрыто */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.5
+  ); /* Затемнение фона с небольшой прозрачностью */
+  z-index: 1;
+  cursor: pointer; /* Указатель, показывающий, что можно кликнуть, чтобы закрыть */
+}
+
+#editLimitModal .modal-content.edit-limit-modal {
+  /* ... остальные стили ... */
+  padding: 20px;
+  width: fit-content; /* Адаптируйте ширину к контенту */
+}
+
+.edit-limit-options {
+  display: flex;
+  flex-wrap: wrap; /* Позволяет элементам обтекать и переноситься */
+  justify-content: center; /* Центрирует элементы */
+  gap: 10px; /* Отступ между элементами */
+}
+
+.edit-limit-options button,
+.edit-limit-options .input-with-icon,
+.edit-limit-options .set-limit-button {
+  width: 40px; /* Ширина элементов */
+  height: 40px; /* Высота элементов */
+  margin: 15px 5px; /* Убрать маржины */
+  display: flex; /* Используйте flex для центрирования текста и иконок */
+  justify-content: center; /* Горизонтальное центрирование */
+  align-items: center; /* Вертикальное центрирование */
+  border-radius: 5px; /* Скругленные углы */
+  border: 2px solid #007bff; /* Синяя обводка */
+}
+
+.input-with-icon {
+  position: relative; /* Для позиционирования иконки */
+}
+
+.input-with-icon input {
+  width: 100%; /* Ширина поля ввода */
+  height: 100%; /* Высота поля ввода */
+  border: none; /* Убрать обводку */
+  border-radius: 5px; /* Скругленные углы */
+  text-align: center; /* Текст по центру */
+}
+
+.input-with-icon i {
+  position: absolute;
+  right: 5px; /* Позиционирование иконки внутри поля */
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none; /* Исключает иконку из событий курсора */
+}
+
+/* Скрываем стрелки у поля типа number */
+.input-with-icon input[type="number"]::-webkit-inner-spin-button,
+.input-with-icon input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-with-icon input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+/* Стиль для кнопки "Установить" */
+.set-limit-button {
+  height: 60px; /* Высота соответствует другим кнопкам */
+  width: calc(
+    100% - (60px * 3 + 10px * 2)
+  ); /* Ширина с учётом отступов и ширины других кнопок */
+  border-radius: 5px; /* Скругленные углы */
+  margin-left: 10px; /* Отступ слева */
+  margin-top: 5px;
+  height: 40px;
+  width: auto;
+}
+.fa-pen-to-square {
+  font-size: 16px; /* Измените значение на желаемый размер иконки */
+  margin-left: 5px;
+}
+
+.fa-pen-to-square:hover {
+  color: #007bff; /* Цвет иконки при наведении */
+}

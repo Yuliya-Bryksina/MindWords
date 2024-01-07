@@ -60,7 +60,8 @@
       <!-- Список слов в колоде -->
       <section id="dailyTasks" class="rounded-section">
         <div class="task new-words" onclick="openNewWordsModal()">
-          Учить новые слова: <span id="newWordsCount">0 из 10</span>
+          Учить новые слова: <span id="newWordsCount">0 из <span id="dailyNewWordLimit">10</span></span>
+          <i class="fa-solid fa-pen-to-square edit-limit" onclick="openEditLimitModal(event);"></i>
         </div>
         <div class="task words-to-review" onclick="openWordsToReviewModal()">
           Слова для повторения: <span id="wordsToReviewCount">0</span>
@@ -193,6 +194,27 @@
     </div>
 
     <div id="notification" class="notification"></div>
+    <!-- Модальное окно для изменения ежедневного лимита новых слов -->
+    <div id="editLimitModal" class="modal" style="display: none;">
+      <div class="modal-content edit-limit-modal">
+        <span class="close" onclick="closeModal('editLimitModal');">&times;</span>
+        <h3>Выберите лимит новых слов в день</h3>
+        <div class="edit-limit-options">
+          <button type="button" onclick="setDailyNewWordLimit(10);">10</button>
+          <button type="button" onclick="setDailyNewWordLimit(20);">20</button>
+          <button type="button" onclick="setDailyNewWordLimit(30);">30</button>
+          <div class="input-with-icon">
+            <input type="number" id="customLimit" placeholder="" />
+            <i class="fa-solid fa-pencil" onclick="focusInput()"></i>
+          </div>
+          
+        </div>   
+        <button type="button" class="set-limit-button" onclick="setDailyNewWordLimit(document.getElementById('customLimit').value);">Установить</button>     
+      </div>
+    </div>
+    
+    
+    
     <script src="/js/script.js"></script>
   </body>
 </html>
