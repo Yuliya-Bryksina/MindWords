@@ -197,41 +197,47 @@ async function updateWord(wordId, qualityResponse, userId) {
     if (!word) {
       throw new Error("Word not found or does not belong to the user");
     }
-
-    console.log("Server: Current word state before any updates:", word);
-
+    console.log("Server: Current word state before updates:", word);
     // Логика для слов в режиме обучения
     if (word.inLearningMode) {
-      console.log(
-        `Server: Word is in learning mode. Current learning step: ${word.learningStep}`
-      );
-
       if (qualityResponse === 0) {
+        // "Снова"
         word.learningStep = 0;
+        word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
+      } else if (qualityResponse === 1) {
+        // "Трудно"
+        // Можно оставить word.learningStep без изменений или увеличить на минимальный шаг
+        word.nextReviewDate = new Date(
+          Date.now() + learningSteps[0] * 60 * 1000
+        ); // Используйте первый шаг обучения для интервала
       } else {
+        // "Хорошо" и "Легко"
         word.learningStep += 1;
-
-        if (word.learningStep >= learningSteps.length) {
+        if (word.learningStep < learningSteps.length) {
+          word.nextReviewDate = new Date(
+            Date.now() + learningSteps[word.learningStep] * 60 * 1000
+          );
+        } else {
+          // Выход из режима обучения
           word.inLearningMode = false;
           word.studied = true;
           word.repetitionLevel = 1;
           word.efactor = 2.5;
           word.reviewInterval = 1;
           word.nextReviewDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        } else {
-          word.nextReviewDate = new Date(
-            Date.now() + learningSteps[word.learningStep] * 60 * 1000
-          );
         }
       }
     } else {
       // Логика для слов в режиме повторения
       if (qualityResponse === 0) {
+        // "Снова"
         word.inLearningMode = true;
         word.learningStep = 0;
         word.repetitionLevel = 0;
         word.reviewInterval = 1;
+        word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
       } else {
+        // "Трудно", "Хорошо" и "Легко"
         word.repetitionLevel += 1;
         word.efactor = calculateEFactor(word.efactor, qualityResponse);
         word.reviewInterval = calculateInterval(
@@ -239,30 +245,18 @@ async function updateWord(wordId, qualityResponse, userId) {
           word.efactor,
           word.repetitionLevel
         );
+        word.nextReviewDate = new Date(
+          Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
+        );
       }
-      word.nextReviewDate = new Date(
-        Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
-      );
     }
-
+    console.log("Server: Current word state AFTER updates:", word);
     console.log("Calculated nextReviewDate:", word.nextReviewDate);
 
-    if (isNaN(word.nextReviewDate.getTime())) {
-      console.error("Invalid nextReviewDate calculated:", word.nextReviewDate);
-      word.nextReviewDate = new Date();
-    }
-
-    console.log("Server: Word state before saving:", word);
-
-    try {
-      await word.save();
-      console.log(`Server: Word with wordId: ${wordId} updated successfully.`);
-    } catch (error) {
-      console.error(`Server: Error saving word with wordId: ${wordId}:`, error);
-    }
+    // Сохранение изменений в слове
+    await word.save();
   } catch (error) {
-    console.error(`Server: Error updating word with wordId: ${wordId}:`, error);
-    throw error;
+    throw new Error(`Error updating word with wordId: ${wordId}: ${error}`);
   }
 }
 

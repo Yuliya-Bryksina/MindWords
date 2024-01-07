@@ -265,14 +265,14 @@ function initializeProgressBar(wordCount, progressBarId) {
   }
 }
 
-function updateProgressBar(index, status) {
+function updateProgressBar() {
   const progressBarItems = document.querySelectorAll(".progress-item");
-  if (progressBarItems.length > index) {
-    if (status === "изучено") {
-      progressBarItems[index].classList.add("learned"); // Добавляем класс для изученного слова
-    }
+  // Обновляем прогресс-бар, используя learnedWordsCount
+  if (progressBarItems.length > learnedWordsCount) {
+    progressBarItems[learnedWordsCount].classList.add("learned"); // Добавляем класс для изученного слова
   }
 }
+
 // Функция для отправки статуса слова на сервер
 function updateWordStatus(wordId, qualityResponse) {
   return fetch("/update-word-status", {
@@ -305,6 +305,7 @@ function openNewWordsModal() {
       wordList = data;
       currentWordIndex = 0;
       console.log("wordList.length:", wordList.length);
+      learnedWordsCount = 0; // Сброс счетчика изученных слов
       initializeProgressBar(wordList.length, "newWordsProgressBar");
       if (wordList.length > 0) {
         const firstWord = wordList[currentWordIndex]; // Получаем первое слово
@@ -325,6 +326,7 @@ function openWordsToReviewModal() {
         wordList = data;
         currentWordIndex = 0;
         console.log("wordList.length:", wordList.length);
+        learnedWordsCount = 0; // Сброс счетчика изученных слов
         initializeProgressBar(wordList.length, "reviewWordsProgressBar"); // Инициализируем прогресс-бар для слов на повторение
         loadWord(wordList[currentWordIndex], currentContext);
       }
@@ -503,8 +505,8 @@ function formatDate(date) {
 
 function markWordAsLearned(wordId) {
   wordList = wordList.filter((word) => word._id !== wordId);
-  updateProgressBar(learnedWordsCount, "изучено");
-  learnedWordsCount++; // Увеличиваем счетчик изученных слов
+  updateProgressBar(); // Обновляем прогресс-бар перед увеличением счетчика
+  learnedWordsCount++; // Теперь увеличиваем счетчик изученных слов
   loadNextWord();
 }
 
