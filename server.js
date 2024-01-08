@@ -795,3 +795,51 @@ app.post("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
     res.status(500).send("Ошибка при сохранении данных");
   }
 });
+
+app.post("/api/user/learned-word", isAuthenticated, async (req, res) => {
+  const { wordId } = req.body;
+  try {
+    // Находим пользователя и обновляем статус слова как изученное
+    const user = await User.findById(req.session.userId).exec();
+    if (!user) {
+      return res.status(404).send("Пользователь не найден");
+    }
+
+    // Обновляем статус слова
+    const wordToStudy = user.wordsToStudy.find((word) =>
+      word.wordId.equals(wordId)
+    );
+    if (wordToStudy) {
+      wordToStudy.learned = true;
+    } else {
+      // Если слово не в списке на изучение, добавляем его в выученные
+      user.learnedWords.push(wordId);
+    }
+
+    // Сохраняем обновленные данные пользователя
+    await user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка при обновлении статуса изученного слова");
+  }
+});
+
+app.get("/api/user/progress", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId).exec();
+    if (!user) {
+      return res.status(404).send("Пользователь не найден");
+    }
+
+    // Отправляем прогресс пользователя: слова для изучения и выученные слова
+    res.json({
+      wordsToStudy: user.wordsToStudy,
+      learnedWords: user.learnedWords,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка при получении прогресса пользователя");
+  }
+});

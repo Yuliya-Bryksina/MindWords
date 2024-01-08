@@ -18,12 +18,13 @@
     </style>
     <link rel="stylesheet" href="css/styles.css"
   </head>
-  <div class="top-bar">
+  <body>
+   <div class="top-bar">
     <div class="top-bar-container">
       <img src="/images/logo.png" alt="Memorize Logo" class="logo">
       <button id="logoutButton">Выйти</button>
     </div>
-  </div>
+   </div>
     <div id="app">
       <!-- Форма для добавления новых слов -->
       <div class="add-word-section">
@@ -34,7 +35,6 @@
               Создать колоду
             </button>
           </div>
-
           <select id="deckSelect" class="select-style">
             <option value="">Выберите колоду</option>
             <!-- Опции будут добавлены динамически -->
@@ -56,7 +56,6 @@
           <button id="addWordButton" onclick="addWord()">Добавить</button>
         </section>
       </div>
-
       <!-- Список слов в колоде -->
       <section id="dailyTasks" class="rounded-section">
         <div class="task new-words" onclick="openNewWordsModal()">
@@ -67,16 +66,15 @@
           Слова для повторения: <span id="wordsToReviewCount">0</span>
         </div>
       </section>
-
       <!-- Модуль обучения -->
-<section class="rounded-section">
-  <h2>Список колод</h2>
-  <input type="text" id="searchInput" oninput="searchDecks()" placeholder="Поиск колод">
-  <div id="learningModule">
-    <!-- Место для отображения колод будет здесь -->
-    <div id="decksContainer"></div>
-  </div>
-</section>
+    <section class="rounded-section">
+      <h2>Список колод</h2>
+      <input type="text" id="searchInput" oninput="searchDecks()" placeholder="Поиск колод">
+      <div id="learningModule">
+      <!-- Место для отображения колод будет здесь -->
+      <div id="decksContainer"></div>
+      </div>
+    </section>
     <div id="studyModal" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
@@ -173,9 +171,7 @@
           <button id="easyReviewWordButton">Легко</button>
           <span id="easyNextReviewDate"></span>
         </div>
-        
     </div>
-    
       </div>
     </div>
 
@@ -212,9 +208,6 @@
         <button type="button" class="set-limit-button" onclick="setDailyNewWordLimit(document.getElementById('customLimit').value);">Установить</button>     
       </div>
     </div>
-    
-    
-    
     <script src="/js/script.js"></script>
   </body>
 </html>

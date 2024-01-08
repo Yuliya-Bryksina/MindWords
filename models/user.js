@@ -6,6 +6,13 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     dailyWordLimit: { type: Number, default: 10 }, // Добавлено новое поле с дефолтным значением 10
+    wordsToStudy: [
+      {
+        word: { type: mongoose.Schema.Types.ObjectId, ref: "Word" },
+        learned: { type: Boolean, default: false },
+      },
+    ],
+    learnedWords: [{ type: mongoose.Schema.Types.ObjectId, ref: "Word" }],
   },
   {
     timestamps: true, // Добавляет поля createdAt и updatedAt
