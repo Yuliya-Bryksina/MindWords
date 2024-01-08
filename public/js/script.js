@@ -22,43 +22,47 @@ function showNotification(message) {
 }
 
 function updateDailyTasks() {
-  const dailyLimit = getDailyNewWordLimit(); // Получаем лимит из localStorage или значение по умолчанию
-
-  fetch("/daily-tasks")
+  // Сначала получаем лимит слов с сервера
+  fetch("/api/user/dailyWordLimit")
     .then((response) => response.json())
-    .then((data) => {
-      const now = new Date();
+    .then((limitData) => {
+      const dailyLimit = limitData.dailyWordLimit;
 
-      // Определяем количество новых слов, готовых к изучению
-      const newWordsReady = data.newWords.filter((word) => {
-        const reviewDate = new Date(word.nextReviewDate);
-        return reviewDate <= now;
-      }).length;
+      // Теперь получаем данные ежедневных задач
+      fetch("/daily-tasks")
+        .then((response) => response.json())
+        .then((data) => {
+          // Остальная логика функции остается неизменной
+          const now = new Date();
+          const newWordsReady = data.newWords.filter((word) => {
+            const reviewDate = new Date(word.nextReviewDate);
+            return reviewDate <= now;
+          }).length;
 
-      // Ограничиваем количество новых слов на основе лимита пользователя
-      const newWordsCount = Math.min(newWordsReady, parseInt(dailyLimit));
+          const newWordsCount = Math.min(newWordsReady, parseInt(dailyLimit));
+          const wordsToReviewCount = data.wordsToReview.filter((word) => {
+            const reviewDate = new Date(word.nextReviewDate);
+            return reviewDate <= now;
+          }).length;
 
-      // Определяем количество слов для повторения
-      const wordsToReviewCount = data.wordsToReview.filter((word) => {
-        const reviewDate = new Date(word.nextReviewDate);
-        return reviewDate <= now;
-      }).length;
+          const newWordsCountElement = document.getElementById("newWordsCount");
+          if (newWordsCountElement) {
+            newWordsCountElement.textContent = `${newWordsCount} из ${dailyLimit}`;
+          }
 
-      // Обновляем отображение на странице
-      const newWordsCountElement = document.getElementById("newWordsCount");
-      if (newWordsCountElement) {
-        newWordsCountElement.textContent = `${newWordsCount} из ${dailyLimit}`;
-      }
-
-      const wordsToReviewCountElement =
-        document.getElementById("wordsToReviewCount");
-      if (wordsToReviewCountElement) {
-        wordsToReviewCountElement.textContent = wordsToReviewCount;
-      }
+          const wordsToReviewCountElement =
+            document.getElementById("wordsToReviewCount");
+          if (wordsToReviewCountElement) {
+            wordsToReviewCountElement.textContent = wordsToReviewCount;
+          }
+        })
+        .catch((error) => {
+          console.error("Ошибка при получении ежедневных задач: ", error);
+        });
     })
-    .catch((error) => {
-      console.error("Ошибка при получении ежедневных задач: ", error);
-    });
+    .catch((error) =>
+      console.error("Ошибка при получении лимита слов:", error)
+    );
 }
 
 function updateNewWordsCount() {
@@ -556,6 +560,7 @@ function initializeUserSession() {
   getDecks("deckSelect"); // Идентификатор для существующего select
   getDecks("deck-select"); // Идентификатор для нового select
   loadDecks();
+  initializeDailyNewWordLimit();
   // ... любые другие функции инициализации
 }
 
@@ -1849,11 +1854,22 @@ function displayPreviewContainer() {
 }
 
 function saveDailyNewWordLimit(limit) {
-  localStorage.setItem("dailyNewWordLimit", limit);
-}
-
-function getDailyNewWordLimit() {
-  return localStorage.getItem("dailyNewWordLimit") || "10"; // Значение по умолчанию - 10
+  // Функция для сохранения лимита слов на сервере
+  fetch("/api/user/dailyWordLimit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ dailyWordLimit: limit }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("dailyNewWordLimit").innerText =
+        data.dailyWordLimit;
+    })
+    .catch((error) =>
+      console.error("Ошибка при сохранении лимита слов:", error)
+    );
 }
 
 // Функция для открытия модального окна изменения лимита
@@ -1869,16 +1885,37 @@ function closeModal(modalId) {
 
 // Функция для установки нового лимита, вызывается в ответ на действие пользователя
 function setDailyNewWordLimit(limit) {
-  // Проверяем и обновляем лимит
-  localStorage.setItem("dailyNewWordLimit", limit);
-  const dailyNewWordLimitElement = document.getElementById("dailyNewWordLimit");
-  if (dailyNewWordLimitElement) {
-    dailyNewWordLimitElement.textContent = limit;
-  }
-  closeModal("editLimitModal"); // Закрываем модальное окно
-  updateDailyTasks(); // Обновляем задачи после изменения лимита
+  // Отправляем новый лимит на сервер
+  fetch("/api/user/dailyWordLimit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ dailyWordLimit: limit }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Не удалось сохранить лимит слов");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Обновляем отображаемый лимит слов в интерфейсе
+      const dailyNewWordLimitElement =
+        document.getElementById("dailyNewWordLimit");
+      if (dailyNewWordLimitElement) {
+        dailyNewWordLimitElement.textContent = data.dailyWordLimit;
+      }
+
+      closeModal("editLimitModal"); // Закрываем модальное окно
+      updateDailyTasks(); // Обновляем задачи после изменения лимита
+    })
+    .catch((error) => {
+      console.error("Ошибка при установке нового лимита слов:", error);
+    });
 }
-// Функция для закрытия модального окна по клику вне его
+
+// Функция для закрытия модального окна по клику вне его остается неизменной
 window.onclick = function (event) {
   if (event.target.classList.contains("modal-edit-limit")) {
     closeModal(event.target.id);
@@ -1887,11 +1924,18 @@ window.onclick = function (event) {
 
 // Функция для инициализации лимита новых слов
 function initializeDailyNewWordLimit() {
-  const dailyLimit = getDailyNewWordLimit(); // Используем уже существующую функцию
-  const dailyNewWordLimitElement = document.getElementById("dailyNewWordLimit");
-  if (dailyNewWordLimitElement) {
-    dailyNewWordLimitElement.textContent = dailyLimit;
-  }
+  // Функция для получения лимита слов с сервера
+  fetch("/api/user/dailyWordLimit")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.dailyWordLimit) {
+        document.getElementById("dailyNewWordLimit").innerText =
+          data.dailyWordLimit;
+      }
+    })
+    .catch((error) =>
+      console.error("Ошибка при получении лимита слов:", error)
+    );
 }
 
 function focusInput() {

@@ -758,3 +758,40 @@ app.post("/import-words", isAuthenticated, async (req, res) => {
       .json({ success: false, message: "Ошибка при импорте слов." });
   }
 });
+
+// Добавьте маршруты для установки и получения лимита слов
+
+// Получение лимита слов для пользователя
+app.get("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).send("Пользователь не найден");
+    }
+    res.json({ dailyWordLimit: user.dailyWordLimit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка при получении данных пользователя");
+  }
+});
+
+// Сохранение лимита слов для пользователя
+app.post("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
+  try {
+    const { dailyWordLimit } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.session.userId,
+      { dailyWordLimit },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).send("Пользователь не найден");
+    }
+
+    res.json({ dailyWordLimit: user.dailyWordLimit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка при сохранении данных");
+  }
+});
