@@ -158,7 +158,6 @@ function addWord() {
 }
 
 function loadWord(word, context) {
-  console.log("loadWord called for", word.term);
   let modal, studyWord, wordInEnglish, wordTranscription, wordDefinition;
   let againButton, hardButton, goodButton, easyButton;
 
@@ -240,10 +239,12 @@ function loadWord(word, context) {
 
   // Вызываем функцию обновления UI для отображения прогнозируемых дат следующего повторения
   updateNextReviewDateDisplay(word);
-  console.log("loadWord finished for", word.term);
 }
 
 function initializeProgressBar(wordCount, progressBarId) {
+  console.log(
+    `Инициализация прогресс-бара для ${progressBarId} с количеством слов: ${wordCount}`
+  );
   const progressBar = document.getElementById(progressBarId);
   if (!progressBar) {
     console.error(`Элемент с ID '${progressBarId}' не найден.`);
@@ -256,12 +257,14 @@ function initializeProgressBar(wordCount, progressBarId) {
   for (let i = 0; i < wordCount; i++) {
     const progressItem = document.createElement("div");
     progressItem.classList.add("progress-item");
-    console.log("Adding progress item:", progressItem);
     progressBar.appendChild(progressItem);
   }
 }
 
 function updateProgressBar() {
+  console.log(
+    `Обновление прогресс-бара, learnedWordsCount: ${learnedWordsCount}`
+  );
   const progressBarItems = document.querySelectorAll(".progress-item");
   // Обновляем прогресс-бар, используя learnedWordsCount
   if (progressBarItems.length > learnedWordsCount) {
@@ -298,6 +301,10 @@ function updateWordStatus(wordId, qualityResponse) {
 // Обработка открытия модального окна для новых слов
 function openNewWordsModal() {
   currentContext = "newWord";
+  console.log("Открытие модального окна.");
+  console.log(`learnedWordsCount: ${learnedWordsCount}`);
+  console.log(`wordList: `, wordList);
+  console.log(`currentWordIndex: ${currentWordIndex}`);
 
   // Запрос к серверу для получения лимита слов
   fetch("/api/user/dailyWordLimit")
@@ -322,17 +329,6 @@ function openNewWordsModal() {
     .catch((error) => {
       console.error("Ошибка при получении новых слов или лимита слов:", error);
     });
-}
-
-function displayWords(wordList) {
-  // Сброс и инициализация состояния для изучения слов
-  currentWordIndex = 0;
-  learnedWordsCount = 0; // Сброс счетчика изученных слов
-  initializeProgressBar(wordList.length, "newWordsProgressBar");
-
-  if (wordList.length > 0) {
-    loadWord(wordList[currentWordIndex], currentContext);
-  }
 }
 
 function isNextDay() {
@@ -660,6 +656,7 @@ function resetStudyModal() {
   if (message) {
     message.style.display = "none"; // Скрыть сообщение "На сегодня это все"
   }
+  learnedWordsCount = 0;
 }
 
 window.addEventListener("click", function (event) {
@@ -667,15 +664,35 @@ window.addEventListener("click", function (event) {
   const wordsToReviewModal = document.getElementById("wordsToReviewModal");
 
   if (event.target === studyModal) {
+    console.log("Закрытие studyModal. Состояние до сброса:");
+    console.log(`learnedWordsCount: ${learnedWordsCount}`);
+    console.log(`wordList: `, wordList);
+    console.log(`currentWordIndex: ${currentWordIndex}`);
+
     studyModal.style.display = "none";
     resetStudyModal(); // Сбросить состояние модального окна
-    // resetStudyModal(); // Восстановление исходного состояния модального окна для новых слов
+
+    console.log("Состояние после сброса:");
+    console.log(`learnedWordsCount: ${learnedWordsCount}`);
+    console.log(`wordList: `, wordList);
+    console.log(`currentWordIndex: ${currentWordIndex}`);
+
     updateDailyTasks();
     updateNewWordsCount(); // Обновление счетчика новых слов
   } else if (event.target === wordsToReviewModal) {
-    wordsToReviewModal.style.display = "none";
+    console.log("Закрытие wordsToReviewModal. Состояние до сброса:");
+    console.log(`learnedWordsCount: ${learnedWordsCount}`);
+    console.log(`wordList: `, wordList);
+    console.log(`currentWordIndex: ${currentWordIndex}`);
 
+    wordsToReviewModal.style.display = "none";
     // resetWordsToReviewModal(); // Восстановление исходного состояния модального окна для повторения слов
+
+    console.log("Состояние после сброса:");
+    console.log(`learnedWordsCount: ${learnedWordsCount}`);
+    console.log(`wordList: `, wordList);
+    console.log(`currentWordIndex: ${currentWordIndex}`);
+
     updateDailyTasks();
     updateNewWordsCount(); // Обновление счетчиков для повторения слов
   }
@@ -1112,7 +1129,7 @@ function handleLastWord() {
 
     // Скрываем все элементы управления и контейнеры внутри модального окна
     let elementsToHide = modalContent.querySelectorAll(
-      ".modal-footer, .modal-footer *, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
+      ".modal-footer, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
     );
     elementsToHide.forEach(function (element) {
       element.style.display = "none";
