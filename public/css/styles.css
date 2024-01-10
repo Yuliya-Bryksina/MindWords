@@ -189,6 +189,14 @@ input[readonly] {
   cursor: default;
   justify-content: space-between;
 }
+.modal-content-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 450px; /* чтобы занять всю высоту модального окна */
+}
+
 .deck-creation-modal .modal-content {
   width: 300px; /* установите нужную ширину */
   height: auto; /* автоматическая высота */
