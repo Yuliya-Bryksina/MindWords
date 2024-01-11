@@ -306,20 +306,16 @@ function openNewWordsModal() {
   console.log(`wordList: `, wordList);
   console.log(`currentWordIndex: ${currentWordIndex}`);
 
-  // Запрос к серверу для получения лимита слов
-  fetch("/api/user/dailyWordLimit")
-    .then((response) => response.json())
-    .then((data) => {
-      // Установка лимита слов из ответа сервера
-      dailyWordLimit = data.dailyWordLimit;
-
-      // Запрос к серверу для получения новых слов
-      return fetch("/api/new-words");
-    })
+  // Запрос к серверу для получения новых слов
+  fetch("/api/new-words")
     .then((response) => response.json())
     .then((newWords) => {
-      // Установка новых слов в wordList, ограниченная дневным лимитом
-      wordList = newWords.slice(0, dailyWordLimit);
+      // Фильтруем слова, убедившись, что они готовы к изучению
+      const now = new Date();
+      wordList = newWords
+        .filter((word) => new Date(word.nextReviewDate) <= now)
+        .slice(0, dailyWordLimit);
+
       if (wordList.length > 0) {
         loadWord(wordList[0], currentContext);
       }
@@ -2019,26 +2015,23 @@ function updateDailyNewWordLimitElement() {
 }
 
 function updateNewWordsCount() {
-  // Получаем список новых слов для текущего дня
   fetch("/api/new-words")
     .then((response) => response.json())
     .then((newWords) => {
-      // Подсчитываем количество неизученных слов
-      const unlearnedWordsCount = newWords.filter(
-        (word) => !word.studied
-      ).length;
+      const now = new Date(); // Получаем текущее время
+      const unlearnedWordsCount = newWords.filter((word) => {
+        // Фильтруем слова, которые еще не изучены и время которых пришло для изучения
+        return !word.studied && new Date(word.nextReviewDate) <= now;
+      }).length;
 
-      // Получаем элементы UI для отображения количества слов
+      // Обновляем UI
       const newWordsCountElement = document.getElementById("newWordsCount");
       const dailyNewWordLimitElement =
         document.getElementById("dailyNewWordLimit");
 
-      // Обновляем UI
       if (newWordsCountElement) {
         newWordsCountElement.textContent = `${unlearnedWordsCount} из ${dailyWordLimit}`;
       }
-
-      // Обновляем лимит слов в UI, если элемент существует
       if (dailyNewWordLimitElement) {
         dailyNewWordLimitElement.textContent = dailyWordLimit;
       }
@@ -2047,6 +2040,9 @@ function updateNewWordsCount() {
       console.error("Ошибка при получении списка новых слов:", error);
     });
 }
+
+// Вызывайте эту функцию через заданные интервалы для обновления списка слов
+setInterval(updateNewWordsCount, 2 * 60 * 1000); // Обновлять каждые 10 минут
 
 // Функция для закрытия модального окна по клику вне его остается неизменной
 window.onclick = function (event) {

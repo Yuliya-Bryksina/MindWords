@@ -130,28 +130,27 @@ app.get("/api/new-words", isAuthenticated, async (req, res) => {
       return res.status(404).send("Пользователь не найден.");
     }
 
-    // Если lastNewWordsRequest не определён или не является датой,
-    // устанавливаем его на начало эпохи Unix для гарантированного обновления списка слов.
-    if (
-      !user.lastNewWordsRequest ||
-      !(user.lastNewWordsRequest instanceof Date)
-    ) {
-      user.lastNewWordsRequest = new Date(0);
-    }
-
+    // Проверяем, является ли дата последнего запроса новых слов текущим днем
     if (!isSameDay(user.lastNewWordsRequest, new Date())) {
-      const dailyLimit = user.dailyWordLimit;
+      // Если нет, то обновляем список новых слов
+      const currentDate = new Date();
+      const newWordsQuery = {
+        userId: userId,
+        studied: false,
+        nextReviewDate: { $lte: currentDate }, // Условие для выбора слов, готовых к изучению
+      };
 
-      const newWords = await Word.find({ studied: false, userId: userId })
-        .limit(dailyLimit)
+      const newWords = await Word.find(newWordsQuery)
+        .limit(user.dailyWordLimit)
         .exec();
 
       user.dailyWordsList = newWords.map((word) => word._id);
-      user.lastNewWordsRequest = new Date();
+      user.lastNewWordsRequest = currentDate;
       await user.save();
 
       res.json(newWords);
     } else {
+      // Если да, то отправляем список слов, которые уже были выбраны для этого дня
       const savedWords = await Word.find({
         _id: { $in: user.dailyWordsList },
       }).exec();
@@ -865,8 +864,6 @@ app.post("/import-words", isAuthenticated, async (req, res) => {
   }
 });
 
-// Добавьте маршруты для установки и получения лимита слов
-
 // Получение лимита слов для пользователя
 app.get("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
   try {
@@ -911,51 +908,3 @@ app.post("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
     res.status(500).send("Ошибка при сохранении данных");
   }
 });
-
-// app.post("/api/user/learned-word", isAuthenticated, async (req, res) => {
-//   const { wordId } = req.body;
-//   try {
-//     // Находим пользователя и обновляем статус слова как изученное
-//     const user = await User.findById(req.session.userId).exec();
-//     if (!user) {
-//       return res.status(404).send("Пользователь не найден");
-//     }
-
-//     // Обновляем статус слова
-//     const wordToStudy = user.wordsToStudy.find((word) =>
-//       word.wordId.equals(wordId)
-//     );
-//     if (wordToStudy) {
-//       wordToStudy.learned = true;
-//     } else {
-//       // Если слово не в списке на изучение, добавляем его в выученные
-//       user.learnedWords.push(wordId);
-//     }
-
-//     // Сохраняем обновленные данные пользователя
-//     await user.save();
-
-//     res.json({ success: true });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send("Ошибка при обновлении статуса изученного слова");
-//   }
-// });
-
-// app.get("/api/user/progress", isAuthenticated, async (req, res) => {
-//   try {
-//     const user = await User.findById(req.session.userId).exec();
-//     if (!user) {
-//       return res.status(404).send("Пользователь не найден");
-//     }
-
-//     // Отправляем прогресс пользователя: слова для изучения и выученные слова
-//     res.json({
-//       wordsToStudy: user.wordsToStudy,
-//       learnedWords: user.learnedWords,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send("Ошибка при получении прогресса пользователя");
-//   }
-// });
