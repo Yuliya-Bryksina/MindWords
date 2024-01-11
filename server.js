@@ -247,65 +247,61 @@ const learningSteps = [1, 10]; // Убедитесь, что этот масси
 
 async function updateWord(wordId, qualityResponse, userId) {
   try {
+    console.log("Updating word with qualityResponse:", qualityResponse); // Логирование выбранного ответа
     const word = await Word.findOne({ _id: wordId, userId: userId });
     if (!word) {
       throw new Error("Word not found or does not belong to the user");
     }
     console.log("Server: Current word state before updates:", word);
 
+    // Обновляем E-Factor и Review Interval для всех ответов
+    word.efactor = calculateEFactor(word.efactor, qualityResponse);
+    word.reviewInterval = calculateInterval(
+      word.reviewInterval,
+      word.efactor,
+      word.learningStep,
+      qualityResponse
+    );
+
+    // Проверка на корректность reviewInterval перед установкой nextReviewDate
+    if (!word.reviewInterval || word.reviewInterval < 0) {
+      console.error("Invalid review interval calculated:", word.reviewInterval);
+      word.reviewInterval = 1; // Установка стандартного интервала в случае ошибки
+    }
+
     // Логика для слов в режиме обучения
     if (word.inLearningMode) {
-      if (qualityResponse === 0) {
-        // "Снова"
+      if (qualityResponse === 0 || qualityResponse === 1) {
+        // "Снова" или "Трудно"
         word.learningStep = 0;
-        word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
+        word.inLearningMode = true; // Слово остается в режиме обучения
       } else {
         // "Хорошо" и "Легко"
         word.learningStep += 1;
-        if (word.learningStep < learningSteps.length) {
-          word.nextReviewDate = new Date(
-            Date.now() + learningSteps[word.learningStep] * 60 * 1000
-          );
-        } else {
-          if (qualityResponse < 3) {
-            // Проверяем, не был ли ответ "Трудно"
-            // Сбрасываем шаг обучения и оставляем слово в режиме обучения
-            word.learningStep = 0;
-            word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
-          } else {
-            // Выход из режима обучения
-            word.inLearningMode = false;
-            word.studied = true;
-            word.repetitionLevel = 1;
-            word.efactor = 2.5;
-            word.reviewInterval = 1;
-            word.nextReviewDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-          }
+        if (word.learningStep >= learningSteps.length) {
+          // Выход из режима обучения
+          word.inLearningMode = false;
+          word.studied = true;
+          word.repetitionLevel = 1; // Сброс уровня повторения
         }
       }
     } else {
       // Логика для слов в режиме повторения
-      if (qualityResponse === 0) {
-        // "Снова"
+      if (qualityResponse === 0 || qualityResponse === 1) {
+        // "Снова" или "Трудно"
         word.inLearningMode = true;
         word.learningStep = 0;
-        word.repetitionLevel = 0;
-        word.reviewInterval = 1;
-        word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
+        word.repetitionLevel = 0; // Сброс уровня повторения
       } else {
-        // "Трудно", "Хорошо" и "Легко"
+        // "Хорошо" и "Легко"
         word.repetitionLevel += 1;
-        word.efactor = calculateEFactor(word.efactor, qualityResponse);
-        word.reviewInterval = calculateInterval(
-          word.reviewInterval,
-          word.efactor,
-          word.repetitionLevel
-        );
-        word.nextReviewDate = new Date(
-          Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
-        );
       }
     }
+
+    // Установка следующей даты пересмотра
+    word.nextReviewDate = new Date(
+      Date.now() + word.reviewInterval * 24 * 60 * 60 * 1000
+    );
 
     console.log("Server: Current word state AFTER updates:", word);
 
@@ -329,23 +325,73 @@ async function updateWord(wordId, qualityResponse, userId) {
 }
 
 function calculateEFactor(efactor, qualityResponse) {
-  // Функция для расчета E-фактора
-  return Math.max(
-    1.3,
-    efactor +
-      (0.1 - (5 - qualityResponse) * (0.08 + (5 - qualityResponse) * 0.02))
-  );
+  let newEFactor;
+
+  if (qualityResponse === 0) {
+    newEFactor = efactor - 0.2; // Уменьшаем E-Factor сильнее
+  } else if (qualityResponse === 1) {
+    newEFactor = efactor - 0.15; // Уменьшаем E-Factor умеренно
+  } else {
+    newEFactor = efactor + 0.1; // Увеличиваем E-Factor для "Хорошо" и "Легко"
+  }
+
+  return Math.max(1.3, newEFactor); // E-Factor не может быть меньше 1.3
 }
 
-function calculateInterval(previousInterval, efactor, repetitionCount) {
-  // Функция для расчета интервала
-  if (repetitionCount === 1) {
-    return 1;
-  } else if (repetitionCount === 2) {
-    return 6;
+function calculateInterval(
+  previousInterval,
+  efactor,
+  repetitionCount,
+  qualityResponse
+) {
+  console.log(
+    `Calculating interval: previousInterval=${previousInterval}, efactor=${efactor}, repetitionCount=${repetitionCount}, qualityResponse=${qualityResponse}`
+  );
+
+  let calculatedInterval;
+
+  if (repetitionCount === 0) {
+    // Интервалы для первого повторения, исходя из требований, аналогичных Anki
+    switch (qualityResponse) {
+      case 0: // Снова
+        calculatedInterval = 1 / 1440; // Меньше минуты
+        break;
+      case 1: // Трудно
+        calculatedInterval = 6 / 1440; // 6 минут
+        break;
+      case 3: // Хорошо
+        calculatedInterval = 10 / 1440; // 10 минут
+        break;
+      case 5: // Легко
+        calculatedInterval = 3; // 3 дня
+        break;
+      default:
+        calculatedInterval = 1 / 1440; // Значение по умолчанию на всякий случай
+        break;
+    }
   } else {
-    return Math.round(previousInterval * efactor);
+    // Для последующих повторений интервалы увеличиваются
+    switch (qualityResponse) {
+      case 0: // Снова
+        calculatedInterval = 1; // Возвращаемся к короткому интервалу
+        break;
+      case 1: // Трудно
+        calculatedInterval = Math.max(1, previousInterval * 1.2); // Умеренно увеличиваем интервал
+        break;
+      case 3: // Хорошо
+        calculatedInterval = previousInterval * efactor; // Стандартное увеличение
+        break;
+      case 5: // Легко
+        calculatedInterval = previousInterval * efactor * 1.5; // Большее увеличение
+        break;
+      default:
+        calculatedInterval = previousInterval; // Стандартный интервал
+        break;
+    }
   }
+
+  console.log(`Calculated interval: ${calculatedInterval}`);
+  return Math.round(calculatedInterval * 1440) / 1440; // Возвращаем значение в днях, округленное до ближайшей минуты
 }
 
 // Добавьте дополнительные маршруты для обновления и удаления слов здесь
