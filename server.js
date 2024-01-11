@@ -267,13 +267,20 @@ async function updateWord(wordId, qualityResponse, userId) {
             Date.now() + learningSteps[word.learningStep] * 60 * 1000
           );
         } else {
-          // Выход из режима обучения
-          word.inLearningMode = false;
-          word.studied = true;
-          word.repetitionLevel = 1;
-          word.efactor = 2.5;
-          word.reviewInterval = 1;
-          word.nextReviewDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          if (qualityResponse < 3) {
+            // Проверяем, не был ли ответ "Трудно"
+            // Сбрасываем шаг обучения и оставляем слово в режиме обучения
+            word.learningStep = 0;
+            word.nextReviewDate = new Date(); // Слово должно быть повторено немедленно
+          } else {
+            // Выход из режима обучения
+            word.inLearningMode = false;
+            word.studied = true;
+            word.repetitionLevel = 1;
+            word.efactor = 2.5;
+            word.reviewInterval = 1;
+            word.nextReviewDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          }
         }
       }
     } else {
@@ -311,7 +318,6 @@ async function updateWord(wordId, qualityResponse, userId) {
       const updateResult = await User.findByIdAndUpdate(userId, {
         $pull: { dailyWordsList: wordId },
       });
-      // Если вы хотите проверить результат обновления, вы можете сделать это здесь
       console.log("Update result:", updateResult);
     }
 
