@@ -1285,6 +1285,8 @@ function createDeck(deckName) {
     .then((data) => {
       console.log("Deck created:", data);
       getDecks("deckSelect"); // Обновление списка колод
+      getDecks("deck-select");
+      loadDecks();
       document.getElementById("newDeckModal").style.display = "none"; // Закрытие модального окна
       document.getElementById("newDeckName").value = ""; // Очистка поля ввода названия колоды
     })
@@ -1795,25 +1797,23 @@ function displayPreview(words) {
 
 function importWords(deckId, words) {
   fetch("/import-words", {
-    // Путь должен соответствовать серверному маршруту, который вы определите
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // Убедитесь, что вы добавили необходимые заголовки для авторизации, если это требуется
     },
     body: JSON.stringify({ deckId, words }),
   })
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        alert("Слова успешно добавлены в колоду.");
+        showNotification("Слова успешно добавлены в колоду.");
       } else {
-        alert("Произошла ошибка: " + data.message);
+        showNotification("Произошла ошибка: " + data.message);
       }
     })
     .catch((error) => {
       console.error("Ошибка при импорте слов:", error);
-      alert("Ошибка при импорте слов.");
+      showNotification("Ошибка при импорте слов: " + error.message);
     });
 }
 
