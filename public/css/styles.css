@@ -849,6 +849,10 @@ input[type="text"]:focus {
   margin: 10px auto;
   padding: 20px;
 }
+.highlight {
+  border-color: #666;
+  background-color: #eceff5;
+}
 
 #preview-table {
   border-collapse: collapse; /* Убирает двойные линии между ячейками */

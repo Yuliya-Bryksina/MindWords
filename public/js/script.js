@@ -1031,6 +1031,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
         alert("Выберите колоду и/или загрузите файл для импорта");
       }
     });
+
   initializeUserSession();
 });
 
@@ -1813,6 +1814,7 @@ function importWords(deckId, words) {
     .then((data) => {
       if (data.success) {
         showNotification("Слова успешно добавлены в колоду.");
+        loadDecks(); // Обновляем колоды после успешного импорта
       } else {
         showNotification("Произошла ошибка: " + data.message);
       }
@@ -1892,6 +1894,7 @@ function handleFileUpload(file) {
     .catch((error) => {
       console.error("Ошибка при отправке файла:", error);
     });
+  loadDecks();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
