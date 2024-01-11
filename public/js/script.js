@@ -10,15 +10,17 @@ if (window.location.pathname.includes("/deck.html")) {
 }
 
 function showNotification(message) {
+  console.log("showNotification called with message:", message); // Добавить для отладки
   const notification = document.getElementById("notification");
   if (notification) {
     notification.textContent = message;
     notification.style.display = "block";
 
-    // Скрыть уведомление через 3 секунды
     setTimeout(() => {
       notification.style.display = "none";
     }, 3000);
+  } else {
+    console.log("Notification element not found"); // Добавить для отладки
   }
 }
 
@@ -643,7 +645,7 @@ function resetStudyModal() {
   // Показать скрытые элементы и сбросить состояние прогресс-бара и сообщения
   modalContent
     .querySelectorAll(
-      ".modal-footer, .modal-footer *, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
+      "#reviewStudyWord, .modal-footer, .modal-footer *, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
     )
     .forEach((element) => {
       element.style.display = "";
@@ -736,14 +738,13 @@ function onWordInputChange(container) {
 const confirmDeleteButton = document.getElementById("confirmDelete");
 
 if (confirmDeleteButton) {
-  confirmDeleteButton.addEventListener("click", async () => {
+  confirmDeleteButton.addEventListener("click", async (event) => {
     // Получаем ID колоды из URL
     const urlParams = new URLSearchParams(window.location.search);
     const deckId = urlParams.get("deckId");
 
     if (deckId) {
       try {
-        // Отправляем запрос на сервер для удаления колоды с помощью метода POST
         const response = await fetch("/delete-deck", {
           method: "POST",
           headers: {
@@ -752,23 +753,28 @@ if (confirmDeleteButton) {
           body: JSON.stringify({ deckId: deckId }),
         });
 
-        // Обрабатываем ответ сервера
         const result = await response.json();
         if (result.success) {
           // Удаление прошло успешно
-          alert("Колода успешно удалена.");
-          // Переадресация на главную страницу или обновление интерфейса
-          window.location.href = "/main.html";
+          deleteConfirmationModal.style.display = "none"; // Сначала закрываем модальное окно
+
+          // Отображаем уведомление
+          showNotification("Колода успешно удалена.");
+
+          // Задержка перед переадресацией
+          setTimeout(() => {
+            window.location.href = "/main.html";
+          }, 2000); // Задержка в 3 секунды
         } else {
           // Сервер вернул ошибку
-          alert("Ошибка при удалении колоды: " + result.message);
+          showNotification("Ошибка при удалении колоды: " + result.message);
         }
       } catch (error) {
         // Обработка ошибок сети/запроса
-        alert("Ошибка сети: " + error.message);
+        showNotification("Ошибка сети: " + error.message);
       }
     } else {
-      alert("ID колоды не найден.");
+      showNotification("ID колоды не найден.");
     }
   });
 }
@@ -1130,7 +1136,7 @@ function handleLastWord() {
 
     // Скрываем все элементы управления и контейнеры внутри модального окна
     let elementsToHide = modalContent.querySelectorAll(
-      ".modal-footer, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
+      "#reviewStudyWord,.modal-footer, #progressBarContainer, #studyWord, #wordInEnglish, #wordTranscription, #showDefinition, .defenitionButtonContainer"
     );
     elementsToHide.forEach(function (element) {
       element.style.display = "none";

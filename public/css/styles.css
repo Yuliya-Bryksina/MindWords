@@ -189,6 +189,11 @@ input[readonly] {
   cursor: default;
   justify-content: space-between;
 }
+#deleteConfirmationModal .modal-content {
+  height: 25%; /* или любое другое значение, которое вам нужно */
+  /* другие стили, специфичные для этого модального окна */
+}
+
 .modal-content-center {
   display: flex;
   flex-direction: column;
@@ -605,17 +610,49 @@ h2 {
   margin-left: 10px; /* Добавляет отступ слева от кнопки Редактировать */
   /* Остальные стили для кнопки (размер, цвет и т.д.) */
 }
+.modal-actions {
+  display: flex; /* Это свойство выстроит кнопки в ряд */
+  justify-content: center; /* Это свойство выровняет кнопки по центру */
+  align-items: center; /* Это свойство выровняет кнопки по вертикали */
+  gap: 10px; /* Это свойство добавит пространство между кнопками */
+}
 .modal-button {
   padding: 10px 20px; /* Паддинг для кнопок */
   margin: 0 10px; /* Отступы между кнопками */
   border: none; /* Убрать границы */
   border-radius: 5px; /* Закругление углов */
   cursor: pointer; /* Курсор в виде указателя */
+  width: auto; /* или конкретное значение, например 120px */
+  min-width: 100px; /* Минимальная ширина кнопки */
+  max-width: 200px; /* Максимальная ширина кнопки */
+  flex: none; /* Это предотвратит растягивание кнопок */
 }
 
 .modal-button-danger {
   background-color: red; /* Красный фон для кнопки "Да" */
   color: white; /* Белый текст */
+}
+/* Стили для кнопки "Нет" при наведении */
+#deleteConfirmationModal #cancelDelete:hover {
+  /* Ваши стили для hover состояния, например изменение цвета фона или текста */
+  background-color: #2a55ee; /* Светло-серый фон при наведении */
+  color: #fff; /* Темно-серый текст при наведении */
+}
+
+/* Стили для кнопки "Да" при наведении */
+#deleteConfirmationModal #confirmDelete:hover {
+  background-color: #d41010; /* Более темный оттенок красного при наведении */
+  color: #fff; /* Белый текст при наведении */
+}
+/* Общие стили для кнопок в модальном окне */
+#deleteConfirmationModal .modal-button {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Тень для объема */
+  transition: box-shadow 0.3s ease; /* Плавность изменения тени */
+}
+
+/* Стили для кнопок при наведении */
+#deleteConfirmationModal .modal-button:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Более выразительная тень при наведении */
 }
 
 .button-icon {
