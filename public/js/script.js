@@ -400,22 +400,34 @@ let learnedWordsCount = 0; // Счетчик изученных слов
 function handleAgainWordClick() {
   const wordId = this.dataset.wordId;
   updateWordStatus(wordId, 0).then(() => {
-    moveToWordEnd(wordId);
+    console.log(
+      "handleAgainWordClick - currentWordIndex before loadNextWord:",
+      currentWordIndex
+    );
     loadNextWord();
+    moveToWordEnd(wordId);
   });
 }
 
 function handleHardWordClick() {
   const wordId = this.dataset.wordId;
   updateWordStatus(wordId, 1).then(() => {
-    moveToWordEnd(wordId);
+    console.log(
+      "handleHardWordClick - currentWordIndex before loadNextWord:",
+      currentWordIndex
+    );
     loadNextWord();
+    moveToWordEnd(wordId);
   });
 }
 
 function handleGoodWordClick() {
   const wordId = this.dataset.wordId;
   updateWordStatus(wordId, 3).then(() => {
+    console.log(
+      "handleGoodWordClick - currentWordIndex before loadNextWord:",
+      currentWordIndex
+    );
     markWordAsLearned(wordId);
   });
 }
@@ -423,24 +435,32 @@ function handleGoodWordClick() {
 function handleEasyWordClick() {
   const wordId = this.dataset.wordId;
   updateWordStatus(wordId, 5).then(() => {
+    console.log(
+      "handleEasyWordClick - currentWordIndex before loadNextWord:",
+      currentWordIndex
+    );
     markWordAsLearned(wordId);
   });
 }
 
 function moveToWordEnd(wordId) {
+  console.log("Before moveToWordEnd - currentWordIndex:", currentWordIndex);
   const index = wordList.findIndex((word) => word._id === wordId);
+  console.log("Index of word to move:", index);
+
   if (index !== -1) {
     const wordToMove = wordList.splice(index, 1)[0];
     wordList.push(wordToMove);
 
-    // Если перемещаемое слово было текущим, обновляем currentWordIndex
-    if (currentWordIndex === index) {
-      currentWordIndex = wordList.length - 1;
-    } else if (currentWordIndex > index) {
-      // Если перемещаемое слово было перед текущим, уменьшаем currentWordIndex
+    if (index <= currentWordIndex) {
       currentWordIndex--;
     }
+    if (currentWordIndex < 0) {
+      currentWordIndex = 0;
+    }
   }
+
+  console.log("After moveToWordEnd - currentWordIndex:", currentWordIndex);
 }
 
 function calculateEFactor(efactor, qualityResponse) {
@@ -484,13 +504,6 @@ function simulateNextReviewDate(word, qualityResponse) {
       }
     }
     const stepInterval = learningSteps[simulatedWord.learningStep] || 1;
-    console.log({
-      step: simulatedWord.learningStep,
-      interval: learningSteps[simulatedWord.learningStep],
-      reviewInterval: simulatedWord.reviewInterval,
-      efactor: simulatedWord.efactor,
-      repetitionLevel: simulatedWord.repetitionLevel,
-    });
 
     simulatedWord.nextReviewDate = new Date(
       Date.now() + stepInterval * 60 * 1000
@@ -514,13 +527,6 @@ function simulateNextReviewDate(word, qualityResponse) {
         simulatedWord.repetitionLevel
       );
     }
-    console.log({
-      step: simulatedWord.learningStep,
-      interval: learningSteps[simulatedWord.learningStep],
-      reviewInterval: simulatedWord.reviewInterval,
-      efactor: simulatedWord.efactor,
-      repetitionLevel: simulatedWord.repetitionLevel,
-    });
 
     simulatedWord.nextReviewDate = new Date(
       Date.now() + simulatedWord.reviewInterval * 24 * 60 * 60 * 1000
@@ -572,17 +578,16 @@ function markWordAsLearned(wordId) {
 }
 
 function loadNextWord() {
-  console.log("Loading next word. Current index:", currentWordIndex);
+  console.log("Before loadNextWord - currentWordIndex:", currentWordIndex);
 
-  // Если достигли конца списка или текущий индекс больше длины списка, вызываем handleLastWord
-  if (currentWordIndex >= wordList.length) {
+  if (currentWordIndex >= wordList.length - 1) {
     handleLastWord();
   } else {
-    // Загружаем слово на текущем индексе
-    loadWord(wordList[currentWordIndex], currentContext);
-    // Обновляем текущий индекс для следующего слова
     currentWordIndex++;
+    loadWord(wordList[currentWordIndex], currentContext);
   }
+
+  console.log("After loadNextWord - currentWordIndex:", currentWordIndex);
 }
 
 function initializeUserSession() {
