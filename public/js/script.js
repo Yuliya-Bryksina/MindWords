@@ -601,7 +601,13 @@ function simulateNextReviewDate(word, qualityResponse) {
     simulatedWord.efactor,
     qualityResponse
   );
-
+  console.log(
+    `Calling calculateInterval with:`,
+    `reviewInterval: ${simulatedWord.reviewInterval}`,
+    `efactor: ${simulatedWord.efactor}`,
+    `repetitionLevel: ${simulatedWord.repetitionLevel}`,
+    `qualityResponse: ${qualityResponse}`
+  );
   // Рассчитываем reviewInterval сразу после calculateEFactor для всех qualityResponse
   simulatedWord.reviewInterval = calculateInterval(
     simulatedWord.reviewInterval,
@@ -652,7 +658,7 @@ function simulateNextReviewDate(word, qualityResponse) {
   simulatedWord.nextReviewDate = new Date(Date.now() + intervalInMilliseconds);
 
   console.log(`Simulated next review date for qualityResponse ${qualityResponse}:,
-    simulatedWord.nextReviewDate`);
+    ${simulatedWord.nextReviewDate}`);
   return simulatedWord.nextReviewDate;
 }
 
