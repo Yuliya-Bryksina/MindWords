@@ -286,11 +286,16 @@ async function updateWord(wordId, qualityResponse, userId) {
       }
     } else {
       // Логика для слов в режиме повторения
-      if (qualityResponse === 0 || qualityResponse === 1) {
-        // "Снова" или "Трудно"
+      if (qualityResponse === 0) {
+        // "Снова"
         word.inLearningMode = true;
         word.learningStep = 0;
         word.repetitionLevel = 0; // Сброс уровня повторения
+        word.studied = false; // Изменение статуса на "не изучено" при ответе "Снова"
+      } else if (qualityResponse === 1) {
+        word.reviewInterval = Math.max(1, word.reviewInterval * 0.75); // Например, уменьшаем интервал на 25%
+        word.efactor = Math.max(1.3, word.efactor - 0.1); // Немного уменьшаем E-Factor
+        word.repetitionLevel = Math.max(0, word.repetitionLevel - 1); // Уменьшаем уровень повторения
       } else {
         // "Хорошо" и "Легко"
         word.repetitionLevel += 1;
@@ -340,48 +345,55 @@ function calculateEFactor(efactor, qualityResponse) {
 function calculateInterval(
   previousInterval,
   efactor,
-  repetitionCount,
+  repetitionLevel,
   qualityResponse
 ) {
   console.log(
-    `Calculating interval: previousInterval=${previousInterval}, efactor=${efactor}, repetitionCount=${repetitionCount}, qualityResponse=${qualityResponse}`
+    `Calculating interval: previousInterval=${previousInterval}, efactor=${efactor}, repetitionLevel=${repetitionLevel}, qualityResponse=${qualityResponse}`
   );
 
   let calculatedInterval;
 
-  if (repetitionCount === 0) {
-    // Интервалы для первого повторения, исходя из требований, аналогичных Anki
+  if (repetitionLevel === 0) {
+    // Интервалы для первого повторения
     switch (qualityResponse) {
-      case 0: // Снова
+      case 0:
         calculatedInterval = 1 / 1440; // Меньше минуты
         break;
-      case 1: // Трудно
+      case 1:
         calculatedInterval = 6 / 1440; // 6 минут
         break;
-      case 3: // Хорошо
+      case 3:
         calculatedInterval = 10 / 1440; // 10 минут
         break;
-      case 5: // Легко
+      case 5:
         calculatedInterval = 3; // 3 дня
         break;
       default:
-        calculatedInterval = 1 / 1440; // Значение по умолчанию на всякий случай
+        calculatedInterval = 1 / 1440;
         break;
     }
   } else {
-    // Для последующих повторений интервалы увеличиваются
+    // Для последующих повторений
     switch (qualityResponse) {
-      case 0: // Снова
-        calculatedInterval = 1; // Возвращаемся к короткому интервалу
+      case 0:
+        calculatedInterval = 0.15; // Например, повторить через 6 часов
         break;
-      case 1: // Трудно
-        calculatedInterval = Math.max(1, previousInterval * 1.2); // Умеренно увеличиваем интервал
+      case 1:
+        calculatedInterval = previousInterval * 0.6; // Уменьшаем интервал меньше, чем на половину
         break;
-      case 3: // Хорошо
-        calculatedInterval = previousInterval * efactor; // Стандартное увеличение
+      case 3:
+        // Увеличиваем интервал значительнее для "Хорошо"
+        if (repetitionLevel === 1) {
+          calculatedInterval = 1; // 1 сутки для первого повтора "Хорошо"
+        } else {
+          calculatedInterval =
+            previousInterval * (efactor * (1 + repetitionLevel * 0.1));
+        }
         break;
-      case 5: // Легко
-        calculatedInterval = previousInterval * efactor * 1.5; // Большее увеличение
+      case 5:
+        // Еще большее увеличение для "Легко"
+        calculatedInterval = previousInterval * efactor * 1.5;
         break;
       default:
         calculatedInterval = previousInterval; // Стандартный интервал
@@ -906,5 +918,22 @@ app.post("/api/user/dailyWordLimit", isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Ошибка при сохранении данных");
+  }
+});
+
+app.get("/api/words/:wordId", isAuthenticated, async (req, res) => {
+  try {
+    const word = await Word.findOne({
+      _id: req.params.wordId,
+      userId: req.session.userId,
+    });
+    if (!word) {
+      return res
+        .status(404)
+        .send("Word not found or does not belong to the user");
+    }
+    res.json(word);
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 });

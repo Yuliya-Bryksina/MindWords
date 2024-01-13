@@ -240,13 +240,10 @@ function loadWord(word, context) {
   }
 
   // Вызываем функцию обновления UI для отображения прогнозируемых дат следующего повторения
-  updateNextReviewDateDisplay(word);
+  updateNextReviewDateDisplay(word._id);
 }
 
 function initializeProgressBar(wordCount, progressBarId) {
-  console.log(
-    `Инициализация прогресс-бара для ${progressBarId} с количеством слов: ${wordCount}`
-  );
   const progressBar = document.getElementById(progressBarId);
   if (!progressBar) {
     console.error(`Элемент с ID '${progressBarId}' не найден.`);
@@ -264,9 +261,6 @@ function initializeProgressBar(wordCount, progressBarId) {
 }
 
 function updateProgressBar() {
-  console.log(
-    `Обновление прогресс-бара, learnedWordsCount: ${learnedWordsCount}`
-  );
   const progressBarItems = document.querySelectorAll(".progress-item");
   // Обновляем прогресс-бар, используя learnedWordsCount
   if (progressBarItems.length > learnedWordsCount) {
@@ -461,111 +455,205 @@ function moveToWordEnd(wordId) {
   console.log("After moveToWordEnd - currentWordIndex:", currentWordIndex);
 }
 
+async function getWordData(wordId) {
+  try {
+    const response = await fetch(`/api/words/${wordId}`);
+    if (!response.ok) {
+      throw new Error("Error fetching word data");
+    }
+    const wordData = await response.json();
+    console.log(`Data received for wordId ${wordId}:`, wordData); // Лог полученных данных
+    return wordData;
+  } catch (error) {
+    console.error(`Failed to fetch word data for wordId ${wordId}:`, error);
+    // Обработка ошибок
+  }
+}
+
 function calculateEFactor(efactor, qualityResponse) {
-  // Функция для расчета E-фактора
-  return Math.max(
-    1.3,
-    efactor +
-      (0.1 - (5 - qualityResponse) * (0.08 + (5 - qualityResponse) * 0.02))
-  );
-}
-
-function calculateInterval(previousInterval, efactor, repetitionCount) {
-  // Функция для расчета интервала
-  if (repetitionCount === 1) {
-    return 1;
-  } else if (repetitionCount === 2) {
-    return 6;
+  let newEFactor = efactor;
+  if (qualityResponse === 0) {
+    newEFactor -= 0.2;
+  } else if (qualityResponse === 1) {
+    newEFactor -= 0.15;
   } else {
-    return Math.round(previousInterval * efactor);
+    newEFactor += 0.1;
   }
+  return Math.max(1.3, newEFactor);
 }
 
-const learningSteps = [1, 10]; // Шаги в минутах
+function calculateInterval(
+  previousInterval,
+  efactor,
+  repetitionLevel,
+  qualityResponse
+) {
+  let calculatedInterval;
 
-function simulateNextReviewDate(word, qualityResponse) {
-  let simulatedWord = { ...word }; // Создаем копию слова для имитации изменений
-
-  if (simulatedWord.inLearningMode) {
-    // Логика для изучаемых слов
-    if (qualityResponse === 0) {
-      simulatedWord.learningStep = 0;
-    } else {
-      if (simulatedWord.learningStep < learningSteps.length - 1) {
-        simulatedWord.learningStep += 1;
-      }
-      if (simulatedWord.learningStep >= learningSteps.length - 1) {
-        simulatedWord.repetitionLevel = 1;
-        simulatedWord.efactor = 2.5;
-        simulatedWord.reviewInterval = 1;
-        simulatedWord.inLearningMode = false;
-      }
+  if (repetitionLevel === 0) {
+    // Интервалы для первого повторения
+    switch (qualityResponse) {
+      case 0: // Снова
+        calculatedInterval = 1 / 1440; // Меньше минуты
+        break;
+      case 1: // Трудно
+        calculatedInterval = 6 / 1440; // 6 минут
+        break;
+      case 3: // Хорошо
+        calculatedInterval = 10 / 1440; // 10 минут
+        break;
+      case 5: // Легко
+        calculatedInterval = 3; // 3 дня
+        break;
+      default:
+        calculatedInterval = 1 / 1440; // Значение по умолчанию
+        break;
     }
-    const stepInterval = learningSteps[simulatedWord.learningStep] || 1;
-
-    simulatedWord.nextReviewDate = new Date(
-      Date.now() + stepInterval * 60 * 1000
-    );
   } else {
-    // Логика для повторяемых слов
-    if (qualityResponse === 0) {
-      simulatedWord.repetitionLevel = 0;
-      simulatedWord.reviewInterval = 1;
-      simulatedWord.inLearningMode = true;
-      simulatedWord.learningStep = 0;
-    } else {
-      simulatedWord.repetitionLevel += 1;
-      simulatedWord.efactor = calculateEFactor(
-        simulatedWord.efactor,
-        qualityResponse
-      );
-      simulatedWord.reviewInterval = calculateInterval(
-        simulatedWord.reviewInterval,
-        simulatedWord.efactor,
-        simulatedWord.repetitionLevel
-      );
+    // Для последующих повторений
+    switch (qualityResponse) {
+      case 0: // Снова
+        calculatedInterval = 0.15; // Например, повторить через 6 часов
+        break;
+      case 1:
+        calculatedInterval = previousInterval * 0.6; // Уменьшаем интервал меньше, чем на половину
+        break;
+      case 3: // Хорошо
+        // Увеличиваем интервал значительнее для "Хорошо"
+        if (repetitionLevel === 1) {
+          calculatedInterval = 1; // 1 сутки для первого повтора "Хорошо"
+        } else {
+          calculatedInterval =
+            previousInterval * (efactor * (1 + repetitionLevel * 0.1));
+        }
+        break;
+      case 5: // Легко
+        // Еще большее увеличение для "Легко"
+        calculatedInterval = previousInterval * efactor * 1.5;
+        break;
+      default:
+        calculatedInterval = previousInterval; // Стандартный интервал
+        break;
     }
-
-    simulatedWord.nextReviewDate = new Date(
-      Date.now() + simulatedWord.reviewInterval * 24 * 60 * 60 * 1000
-    );
   }
 
-  return simulatedWord.nextReviewDate;
+  return Math.round(calculatedInterval * 1440) / 1440; // Возвращаем значение в днях, округленное до ближайшей минуты
 }
 
-function updateNextReviewDateDisplay(word) {
+async function updateNextReviewDateDisplay(wordId) {
+  const word = await getWordData(wordId); // Получение данных о слове
+
   const nextReviewDates = {
     again: simulateNextReviewDate(word, 0),
     hard: simulateNextReviewDate(word, 1),
     good: simulateNextReviewDate(word, 3),
     easy: simulateNextReviewDate(word, 5),
   };
+  console.log(`Updating UI with next review dates:`, nextReviewDates); // Лог перед обновлением UI
+  // Обновление интерфейса пользователя
+  // Обновление интерфейса пользователя с использованием новой функции форматирования
+  document.getElementById("againNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.again);
+  document.getElementById("hardNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.hard);
+  document.getElementById("goodNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.good);
+  document.getElementById("easyNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.easy);
 
-  // Предполагаем, что у вас есть элементы на странице для отображения дат
-  document.getElementById("againNextReviewDate").textContent = formatDate(
-    nextReviewDates.again
-  );
-  document.getElementById("hardNextReviewDate").textContent = formatDate(
-    nextReviewDates.hard
-  );
-  document.getElementById("goodNextReviewDate").textContent = formatDate(
-    nextReviewDates.good
-  );
-  document.getElementById("easyNextReviewDate").textContent = formatDate(
-    nextReviewDates.easy
-  );
+  document.getElementById("againReviewNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.again);
+  document.getElementById("hardReviewNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.hard);
+  document.getElementById("goodReviewNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.good);
+  document.getElementById("easyReviewNextReviewDate").textContent =
+    formatDateForDisplay(nextReviewDates.easy);
 }
 
-function formatDate(date) {
-  // Проверяем, что аргумент date является объектом Date и он содержит валидную дату
-  if (date instanceof Date && !isNaN(date.getTime())) {
-    // Форматируем дату для отображения
-    return date.toLocaleDateString(); // Или любой другой формат, который вам нравится
+function formatDateForDisplay(nextReviewDate) {
+  const now = new Date();
+  const differenceInMilliseconds = nextReviewDate - now;
+  const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
+  const differenceInHours = differenceInMinutes / 60;
+  const differenceInDays = differenceInHours / 24;
+
+  if (differenceInDays >= 1) {
+    // Округляем до ближайшего целого числа дней
+    return `${Math.round(differenceInDays)} д.`;
+  } else if (differenceInHours >= 1) {
+    // Округляем до ближайшего целого числа часов
+    return `${Math.round(differenceInHours)} ч.`;
   } else {
-    // Если дата невалидна, возвращаем запасное значение
-    return "Дата не определена";
+    // Округляем до ближайшего целого числа минут
+    return `${Math.round(differenceInMinutes)} мин.`;
   }
+}
+
+const learningSteps = [1, 10]; // Шаги в минутах
+
+function simulateNextReviewDate(word, qualityResponse) {
+  // Создаем копию слова для имитации изменений
+  let simulatedWord = { ...word };
+
+  // Рассчитываем E-Factor
+  simulatedWord.efactor = calculateEFactor(
+    simulatedWord.efactor,
+    qualityResponse
+  );
+
+  // Рассчитываем reviewInterval сразу после calculateEFactor для всех qualityResponse
+  simulatedWord.reviewInterval = calculateInterval(
+    simulatedWord.reviewInterval,
+    simulatedWord.efactor,
+    simulatedWord.repetitionLevel,
+    qualityResponse
+  );
+
+  // Теперь обработка логики в зависимости от qualityResponse
+  if (qualityResponse === 0) {
+    // Если ответ "Снова"
+    simulatedWord.inLearningMode = true;
+    simulatedWord.studied = false;
+    simulatedWord.repetitionLevel = 0;
+    simulatedWord.learningStep = 0;
+    // Для "Снова" reviewInterval уже установлен в calculateInterval
+  } else if (qualityResponse === 1) {
+    // Если ответ "Трудно"
+    simulatedWord.repetitionLevel = Math.max(
+      0,
+      simulatedWord.repetitionLevel - 1
+    );
+    if (simulatedWord.repetitionLevel === 0) {
+      simulatedWord.inLearningMode = true;
+      simulatedWord.studied = false;
+    }
+    // Для "Трудно" reviewInterval уже установлен в calculateInterval
+  } else {
+    // "Хорошо" или "Легко"
+    if (simulatedWord.inLearningMode) {
+      // Если это режим обучения
+      simulatedWord.learningStep += 1;
+      if (simulatedWord.learningStep >= learningSteps.length) {
+        simulatedWord.inLearningMode = false;
+        simulatedWord.studied = true;
+        simulatedWord.repetitionLevel = 1;
+      }
+    } else {
+      // Если это режим повторения
+      simulatedWord.repetitionLevel += 1;
+    }
+    // Для "Хорошо" и "Легко" reviewInterval уже установлен в calculateInterval
+  }
+
+  // Устанавливаем следующую дату пересмотра
+  let intervalInMilliseconds =
+    simulatedWord.reviewInterval * 24 * 60 * 60 * 1000;
+  simulatedWord.nextReviewDate = new Date(Date.now() + intervalInMilliseconds);
+
+  console.log(`Simulated next review date for qualityResponse ${qualityResponse}:,
+    simulatedWord.nextReviewDate`);
+  return simulatedWord.nextReviewDate;
 }
 
 function markWordAsLearned(wordId) {
@@ -576,20 +664,15 @@ function markWordAsLearned(wordId) {
 }
 
 function loadNextWord() {
-  console.log("Before loadNextWord - currentWordIndex:", currentWordIndex);
-
   if (currentWordIndex >= wordList.length - 1) {
     handleLastWord();
   } else {
     currentWordIndex++;
     loadWord(wordList[currentWordIndex], currentContext);
   }
-
-  console.log("After loadNextWord - currentWordIndex:", currentWordIndex);
 }
 
 function initializeUserSession() {
-  console.log("Инициализация сессии пользователя...");
   localStorage.setItem("isAuthenticated", "true");
 
   updateDailyTasks()
@@ -2051,7 +2134,7 @@ function updateNewWordsCount() {
 }
 
 // Вызывайте эту функцию через заданные интервалы для обновления списка слов
-setInterval(updateNewWordsCount, 2 * 60 * 1000); // Обновлять каждые 10 минут
+setInterval(updateNewWordsCount, 2 * 60 * 250); // Обновлять каждые 10 минут
 
 // Функция для закрытия модального окна по клику вне его остается неизменной
 window.onclick = function (event) {
