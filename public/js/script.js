@@ -515,11 +515,10 @@ function calculateInterval(
       case 0: // Снова
         calculatedInterval = 0.15; // Например, повторить через 6 часов
         break;
-      case 1:
+      case 1: // Трудно
         calculatedInterval = previousInterval * 0.6; // Уменьшаем интервал меньше, чем на половину
         break;
       case 3: // Хорошо
-        // Увеличиваем интервал значительнее для "Хорошо"
         if (repetitionLevel === 1) {
           calculatedInterval = 1; // 1 сутки для первого повтора "Хорошо"
         } else {
@@ -528,8 +527,11 @@ function calculateInterval(
         }
         break;
       case 5: // Легко
-        // Еще большее увеличение для "Легко"
-        calculatedInterval = previousInterval * efactor * 1.5;
+        if (repetitionLevel === 1) {
+          calculatedInterval = 3; // 3 сутки для первого повтора "Легко"
+        } else {
+          calculatedInterval = previousInterval * efactor * 1.5;
+        }
         break;
       default:
         calculatedInterval = previousInterval; // Стандартный интервал
@@ -537,6 +539,7 @@ function calculateInterval(
     }
   }
 
+  console.log(`Calculated interval: ${calculatedInterval}`);
   return Math.round(calculatedInterval * 1440) / 1440; // Возвращаем значение в днях, округленное до ближайшей минуты
 }
 
@@ -607,7 +610,7 @@ function simulateNextReviewDate(word, qualityResponse) {
   simulatedWord.reviewInterval = calculateInterval(
     simulatedWord.reviewInterval,
     simulatedWord.efactor,
-    simulatedWord.repetitionLevel,
+    simulatedWord.learningStep, // Использовать learningStep вместо repetitionLevel
     qualityResponse
   );
 
