@@ -392,8 +392,12 @@ function calculateInterval(
         }
         break;
       case 5:
-        // Еще большее увеличение для "Легко"
-        calculatedInterval = previousInterval * efactor * 1.5;
+        // Увеличиваем интервал для "Легко"
+        if (repetitionLevel === 1) {
+          calculatedInterval = 3; // 3 сутки для первого повтора "Легко"
+        } else {
+          calculatedInterval = previousInterval * efactor * 1.5;
+        }
         break;
       default:
         calculatedInterval = previousInterval; // Стандартный интервал

@@ -574,19 +574,21 @@ async function updateNextReviewDateDisplay(wordId) {
 function formatDateForDisplay(nextReviewDate) {
   const now = new Date();
   const differenceInMilliseconds = nextReviewDate - now;
-  const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
-  const differenceInHours = differenceInMinutes / 60;
-  const differenceInDays = differenceInHours / 24;
+  const differenceInMinutes = Math.round(
+    differenceInMilliseconds / (1000 * 60)
+  );
+  const differenceInHours = Math.round(differenceInMinutes / 60);
+  const differenceInDays = Math.round(differenceInHours / 24);
 
   if (differenceInDays >= 1) {
-    // Округляем до ближайшего целого числа дней
-    return `${Math.round(differenceInDays)} д.`;
+    // Если разница больше или равна одному дню, отображаем в днях
+    return `${differenceInDays} д.`;
   } else if (differenceInHours >= 1) {
-    // Округляем до ближайшего целого числа часов
-    return `${Math.round(differenceInHours)} ч.`;
+    // Если разница больше или равна одному часу, но меньше одного дня, отображаем в часах
+    return `${differenceInHours} ч.`;
   } else {
-    // Округляем до ближайшего целого числа минут
-    return `${Math.round(differenceInMinutes)} мин.`;
+    // Если разница меньше одного часа, отображаем в минутах
+    return `${differenceInMinutes} мин.`;
   }
 }
 
@@ -601,14 +603,7 @@ function simulateNextReviewDate(word, qualityResponse) {
     simulatedWord.efactor,
     qualityResponse
   );
-  console.log(
-    `Calling calculateInterval with:`,
-    `reviewInterval: ${simulatedWord.reviewInterval}`,
-    `efactor: ${simulatedWord.efactor}`,
-    `repetitionLevel: ${simulatedWord.repetitionLevel}`,
-    `qualityResponse: ${qualityResponse}`
-  );
-  // Рассчитываем reviewInterval сразу после calculateEFactor для всех qualityResponse
+  // Обновляем reviewInterval после изменения learningStep и efactor
   simulatedWord.reviewInterval = calculateInterval(
     simulatedWord.reviewInterval,
     simulatedWord.efactor,
@@ -616,40 +611,30 @@ function simulateNextReviewDate(word, qualityResponse) {
     qualityResponse
   );
 
-  // Теперь обработка логики в зависимости от qualityResponse
+  // Если слово в режиме обучения и получает ответы "Хорошо" или "Легко"
+  if (
+    simulatedWord.inLearningMode &&
+    (qualityResponse === 3 || qualityResponse === 5)
+  ) {
+    simulatedWord.learningStep += 1;
+    if (simulatedWord.learningStep >= learningSteps.length) {
+      simulatedWord.inLearningMode = false; // Выход из режима обучения
+      simulatedWord.studied = true; // Слово считается изученным
+      simulatedWord.repetitionLevel = 1; // Сброс уровня повторения
+    }
+  }
+
+  // Обрабатываем случаи "Снова" и "Трудно", если нужно
   if (qualityResponse === 0) {
-    // Если ответ "Снова"
+    // Для "Снова" возвращаем слово в начало процесса обучения
     simulatedWord.inLearningMode = true;
     simulatedWord.studied = false;
-    simulatedWord.repetitionLevel = 0;
     simulatedWord.learningStep = 0;
-    // Для "Снова" reviewInterval уже установлен в calculateInterval
-  } else if (qualityResponse === 1) {
-    // Если ответ "Трудно"
-    simulatedWord.repetitionLevel = Math.max(
-      0,
-      simulatedWord.repetitionLevel - 1
-    );
-    if (simulatedWord.repetitionLevel === 0) {
-      simulatedWord.inLearningMode = true;
-      simulatedWord.studied = false;
-    }
-    // Для "Трудно" reviewInterval уже установлен в calculateInterval
-  } else {
-    // "Хорошо" или "Легко"
-    if (simulatedWord.inLearningMode) {
-      // Если это режим обучения
-      simulatedWord.learningStep += 1;
-      if (simulatedWord.learningStep >= learningSteps.length) {
-        simulatedWord.inLearningMode = false;
-        simulatedWord.studied = true;
-        simulatedWord.repetitionLevel = 1;
-      }
-    } else {
-      // Если это режим повторения
-      simulatedWord.repetitionLevel += 1;
-    }
-    // Для "Хорошо" и "Легко" reviewInterval уже установлен в calculateInterval
+    simulatedWord.repetitionLevel = 0;
+  } else if (qualityResponse === 1 && simulatedWord.repetitionLevel === 0) {
+    // Для "Трудно" слово возвращается в начало процесса обучения, если оно там было
+    simulatedWord.inLearningMode = true;
+    simulatedWord.studied = false;
   }
 
   // Устанавливаем следующую дату пересмотра
@@ -657,8 +642,10 @@ function simulateNextReviewDate(word, qualityResponse) {
     simulatedWord.reviewInterval * 24 * 60 * 60 * 1000;
   simulatedWord.nextReviewDate = new Date(Date.now() + intervalInMilliseconds);
 
-  console.log(`Simulated next review date for qualityResponse ${qualityResponse}:,
-    ${simulatedWord.nextReviewDate}`);
+  console.log(
+    `Simulated next review date for qualityResponse ${qualityResponse}:, simulatedWord.nextReviewDate`
+  );
+
   return simulatedWord.nextReviewDate;
 }
 
