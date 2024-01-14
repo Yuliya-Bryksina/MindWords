@@ -1099,10 +1099,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
       loginUser(email, password, rememberMe);
     });
   }
-  document
-    .getElementById("import-button")
-    .addEventListener("click", function () {
-      console.log("Import button clicked"); // Добавьте это для дебага
+  const importButton = document.getElementById("import-button");
+  if (importButton) {
+    importButton.addEventListener("click", function () {
+      console.log("Import button clicked"); // Для дебага
       const selectedDeckId = document.getElementById("deck-select").value;
       if (selectedDeckId && parsedWords.length) {
         importWords(selectedDeckId, parsedWords);
@@ -1110,6 +1110,51 @@ document.addEventListener("DOMContentLoaded", (event) => {
         alert("Выберите колоду и/или загрузите файл для импорта");
       }
     });
+  }
+
+  const dropArea = document.getElementById("drop-area");
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function highlight(e) {
+    dropArea.classList.add("highlight");
+  }
+
+  function unhighlight(e) {
+    dropArea.classList.remove("highlight");
+  }
+
+  function handleDrop(e) {
+    preventDefaults(e);
+    unhighlight(e);
+
+    let dt = e.dataTransfer;
+    let files = dt.files;
+
+    handleFiles(files); // Обработка файлов для отображения
+    updateFileName(null, files[0]); // Обновление имени файла для отображения
+    displayPreviewContainer(); // Показываем контейнер для предпросмотра
+  }
+
+  if (dropArea) {
+    // Добавление слушателей событий для области drop
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    dropArea.addEventListener("drop", handleDrop, false);
+  }
 
   initializeUserSession();
 });
@@ -1906,11 +1951,22 @@ function importWords(deckId, words) {
 
 const dropArea = document.getElementById("drop-area");
 
-dropArea.addEventListener("drop", (event) => {
-  event.preventDefault();
-  const files = event.dataTransfer.files;
-  handleFiles(files);
-});
+if (dropArea) {
+  dropArea.addEventListener("dragover", (event) => {
+    event.preventDefault(); // Это событие необходимо для того, чтобы разрешить drop
+  });
+
+  dropArea.addEventListener("drop", (event) => {
+    event.preventDefault();
+    const files = event.dataTransfer.files;
+    handleFiles(files);
+  });
+} else {
+  // Если элемент не найден, можно залогировать это или просто ничего не делать
+  console.log("Drop area not found on the page.");
+}
+
+// Нет необходимости в else блоке, если вы не хотите логировать отсутствие элемента.
 
 // Функция для обновления названия файла
 function updateFileName(event, file = null) {
@@ -1981,59 +2037,16 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeUserSession();
   initializeDailyNewWordLimit();
 
-  // Отслеживание изменений в input type="file"
-  document
-    .getElementById("fileElem")
-    .addEventListener("change", function (event) {
+  const fileElem = document.getElementById("fileElem");
+
+  if (fileElem) {
+    // Отслеживание изменений в input type="file"
+    fileElem.addEventListener("change", function (event) {
       handleFiles(event.target.files); // Обработка файлов для отображения
       updateFileName(event); // Обновление имени файла для отображения
     });
-
-  // Другие функции инициализации, если они есть
+  }
 });
-
-function preventDefaults(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-// Функции подсветки и убирания подсветки области drop
-function highlight(e) {
-  dropArea.classList.add("highlight");
-}
-
-function unhighlight(e) {
-  dropArea.classList.remove("highlight");
-}
-
-// Обработчик события drop
-function handleDrop(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  dropArea.classList.remove("highlight"); // Убрать выделение с drop area
-
-  let dt = e.dataTransfer;
-  let files = dt.files;
-
-  handleFiles(files); // Обработка файлов для отображения
-  updateFileName(null, files[0]); // Обновление имени файла для отображения
-  displayPreviewContainer(); // Показываем контейнер для предпросмотра
-}
-
-// Добавление слушателей событий для области drop
-["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
-  dropArea.addEventListener(eventName, preventDefaults, false);
-});
-
-["dragenter", "dragover"].forEach((eventName) => {
-  dropArea.addEventListener(eventName, highlight, false);
-});
-
-["dragleave", "drop"].forEach((eventName) => {
-  dropArea.addEventListener(eventName, unhighlight, false);
-});
-
-dropArea.addEventListener("drop", handleDrop, false);
 
 // Функция, которая отображает preview контейнер и обновляет подсказку
 function displayPreviewContainer() {
@@ -2146,17 +2159,19 @@ function focusInput() {
   var input = document.getElementById("customLimit");
   var pencilIcon = document.querySelector(".fa-pencil");
 
-  // При фокусе на поле ввода скрываем иконку карандаша
-  input.addEventListener("focus", function () {
-    pencilIcon.style.display = "none";
-  });
+  if (input && pencilIcon) {
+    // При фокусе на поле ввода скрываем иконку карандаша
+    input.addEventListener("focus", function () {
+      pencilIcon.style.display = "none";
+    });
 
-  // Когда поле ввода теряет фокус, показываем иконку карандаша, если поле пустое
-  input.addEventListener("blur", function () {
-    if (input.value === "") {
-      pencilIcon.style.display = "block";
-    }
-  });
+    // Когда поле ввода теряет фокус, показываем иконку карандаша, если поле пустое
+    input.addEventListener("blur", function () {
+      if (input.value === "") {
+        pencilIcon.style.display = "block";
+      }
+    });
+  }
 }
 
 // Вызываем функцию при загрузке страницы
