@@ -5,6 +5,24 @@ let wordChanges = {}; // Ключ - это ID слова, значение - о�
 let parsedWords = []; // Глобальная переменная для хранения разобранных слов
 let dailyWordLimit = 10; // Значение по умолчанию
 
+function checkAuthentication() {
+  // Проверяем, не находится ли пользователь уже на странице входа или регистрации
+  if (
+    !localStorage.getItem("isAuthenticated") &&
+    !["/login.html", "/register.html"].includes(window.location.pathname)
+  ) {
+    window.location.href = "/login.html";
+    return false;
+  }
+  return true;
+}
+
+// Вызов функции проверки авторизации сразу же
+if (!checkAuthentication()) {
+  // Если функция вернула false, остановить дальнейшее выполнение
+  throw new Error("User is not authenticated");
+}
+
 if (window.location.pathname.includes("/deck.html")) {
   loadDeckWords();
 }
@@ -1062,6 +1080,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
       })
         .then((response) => {
           if (response.ok) {
+            // Очищаем localStorage после успешного выхода
+            localStorage.removeItem("isAuthenticated");
             // Успешный выход, перенаправляем на страницу входа
             window.location.href = "/login.html";
           } else {
@@ -1073,6 +1093,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
         });
     });
   }
+
   if (localStorage.getItem("isAuthenticated") === "true") {
     // Проверяем, находимся ли мы на главной странице
     if (
@@ -1156,7 +1177,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     dropArea.addEventListener("drop", handleDrop, false);
   }
 
-  initializeUserSession();
+  // initializeUserSession();
 });
 
 const deckSelectElement = document.getElementById("deckSelect");
@@ -1961,9 +1982,6 @@ if (dropArea) {
     const files = event.dataTransfer.files;
     handleFiles(files);
   });
-} else {
-  // Если элемент не найден, можно залогировать это или просто ничего не делать
-  console.log("Drop area not found on the page.");
 }
 
 // Нет необходимости в else блоке, если вы не хотите логировать отсутствие элемента.
@@ -2033,8 +2051,11 @@ function handleFileUpload(file) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  if (!checkAuthentication()) {
+    return; // Если пользователь не аутентифицирован, дальнейший код не должен выполняться
+  }
   // Вызов функции инициализации пользовательской сессии
-  initializeUserSession();
+  // initializeUserSession();
   initializeDailyNewWordLimit();
 
   const fileElem = document.getElementById("fileElem");
@@ -2093,17 +2114,26 @@ function setDailyNewWordLimit(limit) {
 
 // Функция для инициализации лимита новых слов
 function initializeDailyNewWordLimit() {
-  fetch("/api/user/dailyWordLimit")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.dailyWordLimit) {
-        dailyWordLimit = data.dailyWordLimit;
-        updateDailyNewWordLimitElement();
-      }
-    })
-    .catch((error) => {
-      console.error("Ошибка при получении лимита слов:", error);
-    });
+  // Проверяем, аутентифицирован ли пользователь, перед тем как делать запрос к API
+  if (localStorage.getItem("isAuthenticated") === "true") {
+    fetch("/api/user/dailyWordLimit")
+      .then((response) => {
+        // Обработка неуспешного ответа, например, если пользователь не аутентифицирован
+        if (!response.ok) {
+          throw new Error("Unauthorized: User is not authenticated");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.dailyWordLimit) {
+          dailyWordLimit = data.dailyWordLimit;
+          updateDailyNewWordLimitElement();
+        }
+      })
+      .catch((error) => {
+        console.error("Ошибка при получении лимита слов:", error);
+      });
+  }
 }
 
 function updateDailyNewWordLimitElement() {
