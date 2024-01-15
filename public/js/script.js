@@ -901,6 +901,7 @@ if (confirmDeleteButton) {
 }
 
 document.addEventListener("DOMContentLoaded", (event) => {
+  checkAuthentication();
   const wordInput = document.getElementById("wordInput");
   if (wordInput) {
     wordInput.disabled = true;
