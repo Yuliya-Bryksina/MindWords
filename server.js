@@ -14,6 +14,8 @@ const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 const fs = require("fs");
 const { parse } = require("csv-parse"); // Файлы будут временно сохраняться в папке 'uploads'
+const nodemailer = require("nodemailer");
+const path = require("path");
 
 const app = express();
 
@@ -34,6 +36,7 @@ app.use(
 );
 
 app.use(express.static("public"));
+app.use(express.json());
 
 mongoose
   .connect(process.env.DB_URI)
@@ -939,5 +942,114 @@ app.get("/api/words/:wordId", isAuthenticated, async (req, res) => {
     res.json(word);
   } catch (error) {
     res.status(500).send(error.message);
+  }
+});
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_SERVER,
+  port: process.env.SMTP_PORT,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_LOGIN,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
+app.get("/reset-password/:token", async (req, res) => {
+  const token = req.params.token;
+
+  // Пример проверки токена в базе данных
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+  if (!user) {
+    // Обработка случая, когда токен недействителен или истек
+    res.status(400).send("Недействительный или истекший токен сброса пароля.");
+  } else {
+    console.log(
+      `Отправка файла: ${path.join(__dirname, "public", "reset-password.html")}`
+    );
+    // Отправляем HTML-страницу для установки нового пароля
+    res.sendFile(path.join(__dirname, "public", "reset-password.html"));
+  }
+});
+
+app.post("/request-reset-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).send("Пользователь с таким email не найден.");
+    }
+
+    // Генерация токена сброса пароля (можно использовать UUID или любой другой уникальный идентификатор)
+    const resetToken = require("crypto").randomBytes(32).toString("hex");
+
+    // Сохранение токена сброса пароля в базу данных пользователя
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // Срок действия токена - 1 час
+    await user.save();
+
+    // Ссылка для сброса пароля
+    const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+
+    // Отправка email
+    await transporter.sendMail({
+      from: "remwordsapp@gmail.com",
+      to: email,
+      subject: "Сброс пароля приложения Remwords",
+      text: `Для сброса пароля перейдите по ссылке: ${resetURL}`,
+    });
+
+    res.send("Инструкции по сбросу пароля отправлены на email.");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Ошибка сервера при запросе сброса пароля.");
+  }
+});
+
+app.post("/reset-password/:token", async (req, res) => {
+  console.log("req.body:", req.body);
+  try {
+    console.log("req.headers:", req.headers);
+    const { token } = req.params;
+    const { password } = req.body;
+    console.log("Пароль = " + password); // Должен быть пароль
+
+    // Находим пользователя по токену и проверяем срок его действия
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res
+        .status(400)
+        .send("Токен сброса пароля недействителен или истек.");
+    }
+
+    if (!password) {
+      return res.status(400).send("Пароль не предоставлен.");
+    }
+    // Генерируем соль
+    const salt = await bcrypt.genSalt(10);
+    // Хешируем пароль с использованием сгенерированной соли
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Устанавливаем новый хешированный пароль и очищаем поля сброса
+    user.passwordHash = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    // Сохраняем обновленные данные пользователя
+    await user.save();
+
+    // Отправляем ответ, что пароль изменен
+    res.json({ message: "Пароль успешно изменен." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Ошибка сервера при сбросе пароля.");
   }
 });

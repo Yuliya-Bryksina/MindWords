@@ -5,12 +5,14 @@ const userSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
-    dailyWordLimit: { type: Number, default: 10 }, // Добавлено новое поле с дефолтным значением 10
+    dailyWordLimit: { type: Number, default: 10 },
     lastNewWordsRequest: { type: Date },
     dailyWordsList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Word" }],
+    resetPasswordToken: { type: String }, // Токен для сброса пароля
+    resetPasswordExpires: { type: Date }, // Время истечения токена
   },
   {
-    timestamps: true, // Добавляет поля createdAt и updatedAt
+    timestamps: true,
   }
 );
 

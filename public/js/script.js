@@ -6,21 +6,45 @@ let parsedWords = []; // Глобальная переменная для хра
 let dailyWordLimit = 10; // Значение по умолчанию
 
 function checkAuthentication() {
-  // Проверяем, не находится ли пользователь уже на странице входа или регистрации
-  if (
-    !localStorage.getItem("isAuthenticated") &&
-    !["/login.html", "/register.html"].includes(window.location.pathname)
-  ) {
+  const pathname = window.location.pathname;
+  const excludedPaths = [
+    "/login.html",
+    "/register.html",
+    // Убедитесь, что следующий путь соответствует формату URL, который вы используете для страницы сброса пароля
+    "/reset-password.html",
+    "/request-reset-password.html",
+  ];
+
+  // Мы добавляем регулярное выражение для проверки пути сброса пароля, который включает токен
+  const excludedRegex = [
+    /^\/reset-password\/[0-9a-fA-F]{40}\.html$/,
+    // Добавьте другие регулярные выражения, если они вам нужны
+  ];
+
+  // Проверяем, является ли текущий путь исключением
+  const isExcluded =
+    excludedPaths.includes(pathname) ||
+    excludedRegex.some((regex) => regex.test(pathname));
+
+  if (isExcluded) {
+    // Не выполнять редирект, если мы на одной из исключенных страниц
+    console.log(
+      "Находимся на странице, которая не требует аутентификации:",
+      pathname
+    );
+    return true;
+  }
+
+  // Проверяем аутентификацию
+  const isAuthenticated = localStorage.getItem("isAuthenticated");
+
+  if (!isAuthenticated) {
+    console.log("Редирект на страницу входа");
     window.location.href = "/login.html";
     return false;
   }
-  return true;
-}
 
-// Вызов функции проверки авторизации сразу же
-if (!checkAuthentication()) {
-  // Если функция вернула false, остановить дальнейшее выполнение
-  throw new Error("User is not authenticated");
+  return true;
 }
 
 if (window.location.pathname.includes("/deck.html")) {
@@ -2051,9 +2075,9 @@ function handleFileUpload(file) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  if (!checkAuthentication()) {
-    return; // Если пользователь не аутентифицирован, дальнейший код не должен выполняться
-  }
+  // if (!checkAuthentication()) {
+  //   return; // Если пользователь не аутентифицирован, дальнейший код не должен выполняться
+  // }
   // Вызов функции инициализации пользовательской сессии
   // initializeUserSession();
   initializeDailyNewWordLimit();
@@ -2173,7 +2197,12 @@ function updateNewWordsCount() {
 }
 
 // Вызывайте эту функцию через заданные интервалы для обновления списка слов
-setInterval(updateNewWordsCount, 2 * 60 * 250); // Обновлять каждые 10 минут
+setInterval(function () {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  if (isAuthenticated) {
+    updateNewWordsCount();
+  }
+}, 2 * 60 * 250); // Обновлять каждые 10 минут
 
 // Функция для закрытия модального окна по клику вне его остается неизменной
 window.onclick = function (event) {
@@ -2206,3 +2235,51 @@ function focusInput() {
 
 // Вызываем функцию при загрузке страницы
 document.addEventListener("DOMContentLoaded", focusInput);
+
+const resetPasswordRequestForm = document.getElementById(
+  "resetPasswordRequestForm"
+);
+if (resetPasswordRequestForm) {
+  resetPasswordRequestForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const email = document.getElementById("emailReset").value;
+    fetch("/request-reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          // Если ответ сервера не "OK", пытаемся получить текст ошибки
+          return response.text().then((text) => {
+            throw new Error(text || "Произошла ошибка на сервере");
+          });
+        }
+        // Проверяем, является ли ответ JSON, чтобы правильно его обработать
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return response.json();
+        }
+        // Если ответ успешный, но не JSON, предполагаем, что письмо отправлено
+        return response.text().then((text) => {
+          showNotification(
+            "Инструкции по сбросу пароля отправлены на вашу электронную почту."
+          );
+          return text; // Возвращаем текст, чтобы следующий .then() сработал без ошибок
+        });
+      })
+      .then((data) => {
+        // Если ответ был в формате JSON, показываем соответствующее сообщение
+        if (data && data.message) {
+          showNotification(data.message);
+        }
+      })
+      .catch((error) => {
+        // Показываем уведомление с текстом ошибки
+        showNotification(error.toString());
+        console.error("Ошибка:", error);
+      });
+  });
+}
