@@ -96,42 +96,93 @@ function getTranslations(word) {
   const translationElement = document.getElementById("translation");
   translationsElement.innerHTML = ""; // Очищаем предыдущие результаты
 
+  // Очистить все поля, если слово не введено
+  if (!word.trim()) {
+    translationsElement.innerHTML = "";
+    if (transcriptionElement.tagName.toLowerCase() === "input") {
+      transcriptionElement.value = ""; // Очистить поле input для транскрипции
+    } else {
+      transcriptionElement.textContent = ""; // Очистить текст для других элементов
+    }
+    translationElement.value = ""; // Очистить поле перевода
+    translationsElement.style.display = "none"; // Скрыть блок с переводами
+    return; // Выход из функции, если слово не введено
+  }
+
   if (word.length > 0) {
     translationsElement.style.display = "block";
 
     // Замените 'your-api-key' на ваш реальный ключ API
     const apiKey =
       "dict.1.1.20231220T193259Z.b792137434d37bea.a1702dd0a2afca504fb7b5891f602dfe827e67d2";
+
     const apiURL = `https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${apiKey}&lang=en-ru&text=${word}`;
 
     fetch(apiURL)
       .then((response) => response.json())
       .then((data) => {
+        console.log(data); // Добавьте это для отладки
+        translationsElement.innerHTML = ""; // Очищаем предыдущие результаты
         if (data.def && data.def.length > 0) {
-          const firstTranslation = data.def[0];
-          const transcription = firstTranslation.ts;
-          transcriptionElement.value = transcription; // Устанавливаем транскрипцию
+          /// Берем транскрипцию из первого определения слова
+          const transcription = data.def[0].ts;
+          // Устанавливаем транскрипцию в поле или текстовый элемент
+          const transcriptionElement = document.getElementById("transcription");
+          if (transcriptionElement.tagName.toLowerCase() === "input") {
+            transcriptionElement.value = `[${transcription}]`; // Для input
+          } else {
+            transcriptionElement.textContent = `[${transcription}]`; // Для span или других элементов
+          }
 
-          firstTranslation.tr.slice(0, 3).forEach((item) => {
-            const translationDiv = document.createElement("div");
-            translationDiv.textContent = item.text;
-            translationDiv.classList.add("translation-option");
-            translationDiv.onclick = () => {
-              // Обработчик клика по варианту перевода
-              translationElement.value = item.text;
-            };
-            translationsElement.appendChild(translationDiv);
+          const translationsByPartOfSpeech = {};
+          data.def.forEach((definition) => {
+            const partOfSpeech = definition.pos;
+            if (!translationsByPartOfSpeech[partOfSpeech]) {
+              translationsByPartOfSpeech[partOfSpeech] = [];
+            }
+            translationsByPartOfSpeech[partOfSpeech].push(...definition.tr);
+          });
+
+          Object.keys(translationsByPartOfSpeech).forEach((partOfSpeech) => {
+            const translations = translationsByPartOfSpeech[partOfSpeech].slice(
+              0,
+              3
+            );
+            const posContainer = document.createElement("div");
+            posContainer.classList.add("part-of-speech-container");
+
+            const posHeader = document.createElement("div");
+            posHeader.textContent = partOfSpeech.toUpperCase();
+            posHeader.classList.add("part-of-speech-header");
+            posContainer.appendChild(posHeader);
+
+            const translationsRow = document.createElement("div");
+            translationsRow.classList.add("translations-row");
+
+            translations.forEach((translation) => {
+              const translationDiv = document.createElement("div");
+              translationDiv.textContent = translation.text;
+              translationDiv.classList.add("translation-option");
+              translationDiv.onclick = () => {
+                translationElement.value = translation.text; // Устанавливаем выбранный перевод
+              };
+              translationsRow.appendChild(translationDiv);
+            });
+
+            posContainer.appendChild(translationsRow);
+            translationsElement.appendChild(posContainer);
           });
         } else {
           translationsElement.innerHTML = "Переводы не найдены.";
         }
       })
       .catch((error) => {
-        translationsElement.innerHTML = "Ошибка загрузки переводов.";
         console.error("Error fetching translations:", error);
+        translationsElement.innerHTML = "Ошибка загрузки переводов.";
       });
   } else {
     translationsElement.style.display = "none";
+    transcriptionElement.textContent = ""; // Очистить транскрипцию, если слово не введено
   }
 }
 

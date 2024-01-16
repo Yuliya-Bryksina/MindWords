@@ -53,9 +53,9 @@ app.get("/", (req, res) => {
 app.post("/words", isAuthenticated, async (req, res) => {
   try {
     // Добавление скобок к транскрипции, полученной из запроса
-    if (req.body.transcription) {
-      req.body.transcription = `[${req.body.transcription}]`;
-    }
+    // if (req.body.transcription) {
+    //   req.body.transcription = `[${req.body.transcription}]`;
+    // }
 
     // Создаем новое слово с userId из сессии
     const newWord = new Word({ ...req.body, userId: req.session.userId });

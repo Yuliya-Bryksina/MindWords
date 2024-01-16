@@ -129,7 +129,7 @@ button:hover {
 
 .translations div {
   padding: 5px;
-  border-bottom: 1px solid #eee;
+  /* border-bottom: 1px solid #eee; */
   cursor: pointer;
 }
 
@@ -226,7 +226,7 @@ input[readonly] {
   margin-top: 20px; /* Это добавит пространство между содержимым и .modal-footer */
   display: flex;
   justify-content: space-between; /* Для равномерного распределения кнопок внутри */
-  height: 50px;
+  height: 70px;
 }
 #progressBarContainer,
 .modal-footer {
@@ -243,9 +243,19 @@ input[readonly] {
 .modal-footer button {
   border-radius: 20px;
   margin-right: 20px;
+  display: block; /* Заставляет кнопку занимать всю ширину контейнера div */
+  margin: auto; /* Дополнительное центрирование кнопки */
 }
 .modal-footer button:last-child {
   margin-right: 0; /* Убираем отступ справа для последней кнопки */
+}
+.modal-footer span {
+  display: block; /* Заставляет span занимать всю ширину контейнера div */
+  margin-top: 5px; /* Отступ сверху для дат */
+}
+.modal-footer > div {
+  text-align: center; /* Центрирует содержимое div */
+  margin-bottom: 10px; /* Добавляет отступ снизу для каждого div */
 }
 
 .translations {
@@ -1045,4 +1055,86 @@ input[type="text"]:focus {
 
 #newPasswordLabel {
   margin-bottom: 10px; /* Или другое значение, которое вам подходит */
+}
+/* Стиль для заголовков частей речи */
+.part-of-speech-header {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #333;
+}
+/* Стиль для вариантов перевода */
+.translation-option {
+  padding: 5px;
+  margin-right: 5px; /* Добавить отступ справа */
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  position: relative; /* Для корректного отображения тени */
+}
+
+.translation-option:hover {
+  /* background-color: #e8e8e8; */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Добавляем тень */
+}
+
+.translation-option:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Уменьшаем тень при клике */
+}
+
+/* Стиль для контейнера части речи */
+.part-of-speech-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+}
+.part-of-speech-container:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+/* Стиль для заголовков частей речи */
+.part-of-speech-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+/* Стиль для строки с переводами */
+.translations-row {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+/* Добавляем нижнюю границу всем элементам перевода, кроме последнего */
+/* .translations-row .translation-option {
+  border-bottom: 1px solid #eee;
+}
+/* Убираем нижнюю границу у последнего элемента */
+/* .translations-row .translation-option:last-child { */
+/* border-bottom: none; */
+/* } */
+/* */
+
+/* Стиль для вариантов перевода */
+.translation-option {
+  padding: 5px;
+  margin-right: 5px; /* Добавить отступ справа */
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  transition: background-color 0.3s ease;
+}
+
+/* При необходимости добавьте медиа-запросы для адаптивного дизайна */
+@media (max-width: 600px) {
+  .translations-row {
+    flex-direction: column;
+  }
+  .translation-option {
+    margin-bottom: 5px;
+    margin-right: 0;
+  }
 }
